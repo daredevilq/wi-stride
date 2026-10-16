@@ -1,0 +1,1 @@
+A native Android application combining real-time Wi-Fi diagnostics with indoor signal heatmapping powered by Pedestrian Dead Reckoning (PDR) sensor fusion.
