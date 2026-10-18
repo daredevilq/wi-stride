@@ -80,6 +80,8 @@ class TargetValidatorTest {
                 "::1]",
                 "[google.com]",
                 "fe80::1%",
+                "fe80::1%wl an0",
+                "%wlan0",
                 "1:2:3:4:5:6:7::8",
                 "1:2:3:4:5:6:7:8::",
                 "2001:db8:::1",
