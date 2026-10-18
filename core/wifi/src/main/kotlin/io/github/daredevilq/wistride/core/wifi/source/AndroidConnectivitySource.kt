@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 private const val LEGACY_POLL_INTERVAL_MS = 1_000L
+private const val NO_NETWORK_GRACE_MS = 500L
 
 /** Network callback per API level; API 29-30 additionally polls `WifiManager.connectionInfo`. */
 internal class AndroidConnectivitySource
@@ -33,15 +34,27 @@ internal class AndroidConnectivitySource
             callbackFlow {
                 val tracker = WifiNetworkTracker<Network>()
                 val wifiPresent = MutableStateFlow(false)
+                // Callbacks (ConnectivityThread) and the legacy poller publish concurrently; the lock keeps
+                // emissions in the order of tracker updates.
+                val lock = Any()
+                var published = false
                 val publish: () -> Unit = {
-                    wifiPresent.value = !tracker.isEmpty()
-                    trySend(tracker.current())
+                    synchronized(lock) {
+                        published = true
+                        wifiPresent.value = !tracker.isEmpty()
+                        trySend(tracker.current())
+                    }
                 }
-                trySend(null)
                 val callback = createCallback(tracker, publish)
                 val registered = register(callback)
+                launch {
+                    // Registration replays onAvailable for a connected network within milliseconds; emitting
+                    // null up front would flash "Disconnected" every time the screen starts collecting.
+                    delay(NO_NETWORK_GRACE_MS)
+                    synchronized(lock) { if (!published) trySend(null) }
+                }
                 if (registered && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-                    pollLegacyInfo(tracker, wifiPresent)
+                    pollLegacyInfo(tracker, wifiPresent, publish)
                 }
                 awaitClose { if (registered) connectivityManager.unregisterNetworkCallback(callback) }
             }.distinctUntilChanged()
@@ -75,12 +88,13 @@ internal class AndroidConnectivitySource
         private fun ProducerScope<WifiNetworkInfo?>.pollLegacyInfo(
             tracker: WifiNetworkTracker<Network>,
             wifiPresent: Flow<Boolean>,
+            publish: () -> Unit,
         ) {
             launch {
                 wifiPresent.collectLatest { present ->
                     while (present) {
                         tracker.setPolledInfo(readLegacyInfo())
-                        trySend(tracker.current())
+                        publish()
                         delay(LEGACY_POLL_INTERVAL_MS)
                     }
                 }
