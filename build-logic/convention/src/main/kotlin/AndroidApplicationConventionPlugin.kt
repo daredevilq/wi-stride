@@ -1,5 +1,6 @@
 import com.android.build.api.dsl.ApplicationExtension
 import io.github.daredevilq.wistride.buildlogic.AndroidConfig
+import io.github.daredevilq.wistride.buildlogic.addRobolectricSupport
 import io.github.daredevilq.wistride.buildlogic.addUnitTestDependencies
 import io.github.daredevilq.wistride.buildlogic.configureDetekt
 import io.github.daredevilq.wistride.buildlogic.configureKotlin
@@ -35,5 +36,6 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             configureKotlin()
             configureDetekt()
             addUnitTestDependencies()
+            addRobolectricSupport()
         }
 }
