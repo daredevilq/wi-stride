@@ -27,7 +27,8 @@ internal class AndroidScanResultsSource
 
         private fun readScanResults(): List<RawScanResult> =
             try {
-                wifiManager.scanResults.map { it.toRaw() }
+                // Some devices and test shadows return null despite the non-null SDK contract.
+                wifiManager.scanResults.orEmpty().map { it.toRaw() }
             } catch (_: SecurityException) {
                 emptyList()
             }
