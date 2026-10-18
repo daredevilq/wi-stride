@@ -3,10 +3,13 @@ package io.github.daredevilq.wistride.core.network
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import org.junit.Test
 import java.io.IOException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /** Runs on real IO threads: the fake process blocks in `readLine` exactly like the real one. */
 class ProcessIcmpProberTest {
@@ -49,7 +52,7 @@ class ProcessIcmpProberTest {
                 awaitItem()
                 cancelAndIgnoreRemainingEvents()
             }
-            assertThat(command).containsExactly("ping", "-n", "-O", "-i", "0.5", "-W", "2", "8.8.8.8").inOrder()
+            assertThat(command).containsExactly("ping", "-n", "-O", "-i", "0.5", "8.8.8.8").inOrder()
         }
 
     @Test
@@ -86,6 +89,47 @@ class ProcessIcmpProberTest {
         }
 
     @Test
+    fun `ping ending before any reply has no replies`() =
+        runBlocking {
+            prober().probe(ip("8.8.8.8"), 1_000).test {
+                process.emitLine("[1792314001.676483] no answer yet for icmp_seq=1")
+                awaitItem()
+                process.end()
+                assertThat((awaitError() as IcmpUnusableException).hadReplies).isFalse()
+            }
+        }
+
+    @Test
+    fun `ping ending after a reply is flagged as having replied`() =
+        runBlocking {
+            prober().probe(ip("8.8.8.8"), 1_000).test {
+                process.emitLine("64 bytes from 8.8.8.8: icmp_seq=1 ttl=113 time=1 ms")
+                awaitItem()
+                process.end()
+                assertThat((awaitError() as IcmpUnusableException).hadReplies).isTrue()
+            }
+        }
+
+    @Test
+    fun `cancelling while ping is still starting destroys the process once it exists`() =
+        runBlocking {
+            val entered = CountDownLatch(1)
+            val release = CountDownLatch(1)
+            val prober =
+                prober {
+                    entered.countDown()
+                    release.await(LATCH_TIMEOUT_S, TimeUnit.SECONDS)
+                    process
+                }
+            val job = launch(Dispatchers.Default) { prober.probe(ip("8.8.8.8"), 1_000).collect { } }
+            assertThat(entered.await(LATCH_TIMEOUT_S, TimeUnit.SECONDS)).isTrue()
+            job.cancel()
+            release.countDown()
+            job.join()
+            assertThat(process.destroyed.get()).isTrue()
+        }
+
+    @Test
     fun `exec failure is reported as unusable`() =
         runBlocking {
             prober { throw IOException("no such file") }.probe(ip("8.8.8.8"), 1_000).test {
@@ -102,4 +146,8 @@ class ProcessIcmpProberTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
+
+    private companion object {
+        const val LATCH_TIMEOUT_S = 5L
+    }
 }

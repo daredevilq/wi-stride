@@ -11,6 +11,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import io.github.daredevilq.wistride.core.common.Dispatcher
+import io.github.daredevilq.wistride.core.common.WiStrideDispatcher
 import io.github.daredevilq.wistride.core.network.AndroidDnsTimer
 import io.github.daredevilq.wistride.core.network.AndroidWifiPathSource
 import io.github.daredevilq.wistride.core.network.ConnectTcpProber
@@ -22,9 +24,13 @@ import io.github.daredevilq.wistride.core.network.LatencyMonitor
 import io.github.daredevilq.wistride.core.network.LocalNetworkPermissionChecker
 import io.github.daredevilq.wistride.core.network.ProcessIcmpProber
 import io.github.daredevilq.wistride.core.network.ProcessRunner
+import io.github.daredevilq.wistride.core.network.SharedWifiPathSource
 import io.github.daredevilq.wistride.core.network.SystemProcessRunner
 import io.github.daredevilq.wistride.core.network.TcpProber
 import io.github.daredevilq.wistride.core.network.WifiPathSource
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
 
 @Module
@@ -32,9 +38,6 @@ import javax.inject.Singleton
 internal abstract class NetworkBindingsModule {
     @Binds
     abstract fun bindMonitor(impl: DefaultLatencyMonitor): LatencyMonitor
-
-    @Binds
-    abstract fun bindPathSource(impl: AndroidWifiPathSource): WifiPathSource
 
     @Binds
     abstract fun bindIcmpProber(impl: ProcessIcmpProber): IcmpProber
@@ -55,6 +58,20 @@ internal object NetworkProvidersModule {
     @Provides
     @SdkInt
     fun provideSdkInt(): Int = Build.VERSION.SDK_INT
+
+    @Provides
+    @Singleton
+    @NetworkScope
+    fun provideNetworkScope(
+        @Dispatcher(WiStrideDispatcher.IO) io: CoroutineDispatcher,
+    ): CoroutineScope = CoroutineScope(SupervisorJob() + io)
+
+    @Provides
+    @Singleton
+    fun providePathSource(
+        platform: AndroidWifiPathSource,
+        @NetworkScope scope: CoroutineScope,
+    ): WifiPathSource = SharedWifiPathSource(platform.path, scope)
 
     @Provides
     @Singleton

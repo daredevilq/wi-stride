@@ -19,13 +19,14 @@ import java.net.InetAddress
 import java.util.Locale
 import javax.inject.Inject
 
-private const val PROBE_TIMEOUT_S = "2"
 private const val GRACEFUL_EXIT_WAIT_MS = 300L
 private const val MS_PER_SECOND = 1000.0
 
 /**
- * Runs `ping -n -O -i <interval> -W 2 <ip>` (`ping6` for IPv6) as one long-lived process and maps its
- * output to probes with [PingSequenceTracker]. Because a blocking `readLine` cannot be interrupted
+ * Runs `ping -n -O -i <interval> <ip>` (`ping6` for IPv6) as one long-lived process and maps its
+ * output to probes with [PingSequenceTracker]. With `-O`, iputils reports "no answer yet" when it
+ * sends the next probe, so a probe is lost when no reply arrives within one interval; `-W` has no
+ * effect without `-c`, hence it is not passed. Because a blocking `readLine` cannot be interrupted
  * by coroutine cancellation, cancelling destroys the process instead, which closes the stream and
  * ends the reader.
  */
@@ -41,26 +42,36 @@ class ProcessIcmpProber
             intervalMs: Long,
         ): Flow<LatencyEvent.Probe> =
             channelFlow {
-                val process =
-                    withContext(io) {
-                        try {
-                            runner.start(command(address, intervalMs))
-                        } catch (e: IOException) {
-                            throw IcmpUnusableException("ping could not be started", e)
-                        }
-                    }
+                // withContext's prompt cancellation discards its result when the collector is cancelled
+                // while ping is being forked, even under NonCancellable; the process is therefore
+                // published from inside the block so the finally below can always destroy it.
+                var started: RunningProcess? = null
                 try {
+                    withContext(io) {
+                        started =
+                            try {
+                                runner.start(command(address, intervalMs))
+                            } catch (e: IOException) {
+                                throw IcmpUnusableException("ping could not be started", e)
+                            }
+                    }
+                    val process = checkNotNull(started)
                     launch(io) {
                         val tracker = PingSequenceTracker()
+                        var hadReplies = false
                         generateSequence { process.readLine() }
                             .flatMap { tracker.onLine(PingOutputParser.parsePingLine(it)).asSequence() }
-                            .forEach { send(it.toProbe()) }
+                            .forEach {
+                                if (it is ProbeOutcome.Answered) hadReplies = true
+                                send(it.toProbe())
+                            }
                         // ping without -c only ends on errors or when destroyed; either way it is not usable.
-                        close(IcmpUnusableException("ping process ended"))
+                        close(IcmpUnusableException("ping process ended", hadReplies = hadReplies))
                     }
                     awaitClose()
                 } finally {
-                    withContext(NonCancellable + io) { terminate(process) }
+                    val process = started
+                    if (process != null) withContext(NonCancellable + io) { terminate(process) }
                 }
             }
 
@@ -85,8 +96,6 @@ class ProcessIcmpProber
                 "-O",
                 "-i",
                 String.format(Locale.ROOT, "%.1f", intervalMs / MS_PER_SECOND),
-                "-W",
-                PROBE_TIMEOUT_S,
                 address.hostAddress.orEmpty(),
             )
     }

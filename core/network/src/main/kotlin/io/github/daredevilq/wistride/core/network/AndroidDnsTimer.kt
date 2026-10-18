@@ -11,6 +11,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import java.net.InetAddress
 import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.coroutines.resume
 
 private const val DNS_TIMEOUT_MS = 5_000L
@@ -21,19 +22,25 @@ private const val RESOLVER_CONSTRUCTOR_API = 37
  * Times `DnsResolver.query` with `FLAG_NO_CACHE_LOOKUP` so the figure is the real round trip to the
  * DNS server, not a cache hit. The overload without a record type asks for A and AAAA together,
  * like `getaddrinfo`.
+ *
+ * On API 37+ the answers are delivered through the main looper's MessageQueue (the constructor
+ * takes a Looper), so a busy UI thread can inflate the measured time slightly; the API offers no
+ * way around it. One resolver instance is reused for all measurements.
  */
+@Singleton
 internal class AndroidDnsTimer
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
         private val clock: LatencyClock,
     ) : DnsTimer {
+        private val resolver: DnsResolver by lazy { createResolver() }
+
         override suspend fun measure(
             network: NetworkHandle,
             host: String,
         ): Double? {
             val androidNetwork = (network as? AndroidNetworkHandle)?.network ?: return null
-            val resolver = createResolver()
             return withTimeoutOrNull(DNS_TIMEOUT_MS) {
                 suspendCancellableCoroutine { continuation ->
                     val signal = CancellationSignal()

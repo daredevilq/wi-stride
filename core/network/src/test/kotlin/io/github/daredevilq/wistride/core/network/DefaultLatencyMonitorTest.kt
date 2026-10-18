@@ -9,8 +9,10 @@ import io.github.daredevilq.wistride.core.model.ping.LatencyUnavailableReason
 import io.github.daredevilq.wistride.core.model.ping.PingMethod
 import io.github.daredevilq.wistride.core.model.ping.PingTarget
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import java.net.UnknownHostException
@@ -85,6 +87,53 @@ class DefaultLatencyMonitorTest {
                 cancelAndIgnoreRemainingEvents()
             }
             assertThat(tcp.calls).containsExactly(443)
+        }
+
+    @Test
+    fun `ICMP ending after replies is restarted after a backoff instead of falling back`() =
+        runTest {
+            var starts = 0
+            icmp.behaviour = {
+                if (starts++ == 0) {
+                    flow {
+                        emit(LatencyEvent.Probe(5, 9.0))
+                        throw IcmpUnusableException("ping process ended", hadReplies = true)
+                    }
+                } else {
+                    flow { awaitCancellation() }
+                }
+            }
+            monitor().monitor(host("8.8.8.8"), 1_000).test {
+                assertThat(method().method).isEqualTo(PingMethod.Icmp)
+                assertThat(awaitItem()).isEqualTo(LatencyEvent.Probe(5, 9.0))
+                expectNoEvents()
+                testScheduler.advanceTimeBy(5_001)
+                assertThat(method().method).isEqualTo(PingMethod.Icmp)
+                cancelAndIgnoreRemainingEvents()
+            }
+            assertThat(icmp.calls.get()).isEqualTo(2)
+            assertThat(tcp.calls).isEmpty()
+        }
+
+    @Test
+    fun `a restarted ping that ends before its first reply falls back to TCP`() =
+        runTest {
+            var starts = 0
+            icmp.behaviour = {
+                flow {
+                    if (starts++ == 0) emit(LatencyEvent.Probe(5, 9.0))
+                    throw IcmpUnusableException("ping process ended", hadReplies = starts == 1)
+                }
+            }
+            monitor().monitor(host("8.8.8.8"), 1_000).test {
+                assertThat(method().method).isEqualTo(PingMethod.Icmp)
+                assertThat(awaitItem()).isInstanceOf(LatencyEvent.Probe::class.java)
+                testScheduler.advanceTimeBy(5_001)
+                assertThat(method().method).isEqualTo(PingMethod.Icmp)
+                assertThat(method().method).isEqualTo(PingMethod.TcpConnect(443))
+                cancelAndIgnoreRemainingEvents()
+            }
+            assertThat(icmp.calls.get()).isEqualTo(2)
         }
 
     @Test
@@ -228,6 +277,19 @@ class DefaultLatencyMonitorTest {
                 cancelAndIgnoreRemainingEvents()
             }
             assertThat(dns.hosts).isEmpty()
+        }
+
+    @Test
+    fun `IP literal the platform cannot parse is unavailable and never resolved or timed`() =
+        runTest {
+            handle.onResolve = { listOf(ip("93.184.216.34")) }
+            monitor().monitor(host("fe80::1%nosuchif0", 443), 1_000).test {
+                assertThat(awaitItem()).isEqualTo(LatencyEvent.Unavailable(LatencyUnavailableReason.UnknownHost))
+                expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
+            assertThat(dns.hosts).isEmpty()
+            assertThat(tcp.calls).isEmpty()
         }
 
     @Test

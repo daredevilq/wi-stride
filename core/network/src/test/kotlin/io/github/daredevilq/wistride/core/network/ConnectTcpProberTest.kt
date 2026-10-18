@@ -67,16 +67,32 @@ class ConnectTcpProberTest {
         }
 
     @Test
-    fun `connect timeout is the interval clamped to 500 to 2000 ms`() =
+    fun `connect timeout is the interval, at least 500 ms`() =
         runTest {
             val clock = FakeClock(testScheduler)
-            listOf(100L to 500, 1_000L to 1_000, 5_000L to 2_000).forEach { (interval, expected) ->
+            listOf(100L to 500, 1_000L to 1_000, 5_000L to 5_000).forEach { (interval, expected) ->
                 val handle = FakeNetworkHandle()
                 prober(clock).probe(handle, address, 443, interval).test {
                     awaitItem()
                     cancelAndIgnoreRemainingEvents()
                 }
                 assertThat(handle.connects.first().third).isEqualTo(expected)
+            }
+        }
+
+    @Test
+    fun `socket setup and teardown are outside the timed span`() =
+        runTest {
+            val clock = FakeClock(testScheduler)
+            val handle =
+                FakeNetworkHandle(
+                    onConnect = { _, _, _ -> clock.extraNanos += 12_000_000L },
+                ).apply { onOpen = { clock.extraNanos += 50_000_000L } }
+            prober(clock).probe(handle, address, 443, 1_000).test {
+                assertThat(awaitItem().rttMs).isWithin(0.001).of(12.0)
+                assertThat(handle.opened).isEqualTo(1)
+                assertThat(handle.closed).isEqualTo(1)
+                cancelAndIgnoreRemainingEvents()
             }
         }
 

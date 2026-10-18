@@ -1,10 +1,10 @@
 package io.github.daredevilq.wistride.core.network
 
+import io.github.daredevilq.wistride.domain.network.isIpLiteral
 import java.net.InetAddress
 
 private const val BITS_PER_BYTE = 8
 private const val FULL_BYTE = 0xFF
-private const val MAX_OCTET = 255
 
 private class Cidr(
     literal: String,
@@ -59,16 +59,12 @@ fun isLocalAddress(
         wifiLinkAddresses.any { sharesPrefix(bytes, it.address.address, it.prefixLength) }
 }
 
-private val IPV4_LITERAL = Regex("""^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$""")
-
 /**
- * Parses [host] if it is an IPv4/IPv6 literal, without any DNS lookup; null for host names.
- * `InetAddress.getByName` does not query DNS for a literal, and a malformed candidate containing a
- * colon throws instead of being resolved.
+ * Parses [host] if it is an IP literal in the sense of `isIpLiteral` (the same classifier the UI
+ * uses to decide whether a DNS row exists), without any DNS lookup. Null for host names and for
+ * literals the platform cannot parse numerically (e.g. an unknown `%zone`), which callers treat as
+ * an unusable target rather than resolving it. `InetAddress.getByName` does not query DNS for a
+ * numeric literal, and a malformed candidate containing a colon throws instead of being resolved.
  */
-fun parseIpLiteral(host: String): InetAddress? {
-    val v4 = IPV4_LITERAL.matchEntire(host)
-    val isCandidate =
-        if (v4 != null) v4.groupValues.drop(1).all { it.toInt() <= MAX_OCTET } else ':' in host
-    return if (isCandidate) runCatching { InetAddress.getByName(host) }.getOrNull() else null
-}
+fun parseIpLiteral(host: String): InetAddress? =
+    if (isIpLiteral(host)) runCatching { InetAddress.getByName(host) }.getOrNull() else null

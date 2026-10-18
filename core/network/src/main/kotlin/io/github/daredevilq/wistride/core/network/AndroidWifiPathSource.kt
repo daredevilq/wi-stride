@@ -20,10 +20,12 @@ import javax.inject.Inject
 private const val NO_NETWORK_GRACE_MS = 500L
 
 /**
- * Two callbacks feed a [WifiPathTracker]: one for Wi-Fi networks (INTERNET capability removed so a
- * captive or offline AP stays visible, as in core:wifi) and one for the system default network.
- * `distinctUntilChanged` on the whole [WifiPath] keeps unrelated link-property churn (MTU, DNS
- * servers do not matter here, but they re-fire the callback) from restarting probing.
+ * The unshared Wi-Fi path: every collection registers its own callbacks, so it is only injected
+ * through [SharedWifiPathSource]. Two callbacks feed a [WifiPathTracker]: one for Wi-Fi networks
+ * (INTERNET capability removed so a captive or offline AP stays visible, as in core:wifi) and one
+ * for the system default network. `distinctUntilChanged` on the whole [WifiPath] keeps unrelated
+ * link-property churn (MTU, DNS servers do not matter here, but they re-fire the callback) from
+ * restarting probing.
  */
 internal class AndroidWifiPathSource
     @Inject

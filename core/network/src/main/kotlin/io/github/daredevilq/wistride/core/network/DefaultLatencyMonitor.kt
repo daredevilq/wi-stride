@@ -8,6 +8,7 @@ import io.github.daredevilq.wistride.core.model.ping.LatencyUnavailableReason
 import io.github.daredevilq.wistride.core.model.ping.PingMethod
 import io.github.daredevilq.wistride.core.model.ping.PingTarget
 import io.github.daredevilq.wistride.core.network.di.SdkInt
+import io.github.daredevilq.wistride.domain.network.isIpLiteral
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
@@ -29,6 +30,7 @@ import javax.inject.Inject
 private const val FALLBACK_TCP_PORT = 443
 private const val UNKNOWN_HOST_RETRY_MS = 10_000L
 private const val DNS_PERIOD_MS = 30_000L
+private const val ICMP_RESTART_BACKOFF_MS = 5_000L
 private const val LOCAL_NETWORK_PERMISSION_API = 37
 
 /**
@@ -79,7 +81,7 @@ class DefaultLatencyMonitor
                     awaitCancellation()
                 }
                 val probes = probe(target, path, address, intervalMs)
-                val hostName = (target as? PingTarget.Host)?.host?.takeIf { parseIpLiteral(it) == null }
+                val hostName = (target as? PingTarget.Host)?.host?.takeIf { !isIpLiteral(it) }
                 emitAll(if (hostName == null) probes else merge(probes, dnsEvents(path, hostName)))
             }
 
@@ -100,7 +102,15 @@ class DefaultLatencyMonitor
                 }
 
                 is PingTarget.Host -> {
-                    parseIpLiteral(target.host) ?: resolveHostName(path, target.host)
+                    if (isIpLiteral(target.host)) {
+                        // A literal the platform cannot parse must not fall through to DNS.
+                        parseIpLiteral(target.host) ?: run {
+                            emit(unavailable(LatencyUnavailableReason.UnknownHost))
+                            awaitCancellation()
+                        }
+                    } else {
+                        resolveHostName(path, target.host)
+                    }
                 }
             }
 
@@ -129,14 +139,37 @@ class DefaultLatencyMonitor
                 val ip = address.hostAddress.orEmpty()
                 val port = (target as? PingTarget.Host)?.port
                 if (port == null && path.isDefault) {
-                    emit(LatencyEvent.MethodSelected(PingMethod.Icmp, ip))
-                    // A failing ping is not an error for the user: switch to TCP and say so via MethodSelected.
-                    emitAll(icmp.probe(address, intervalMs).catch { if (it !is IcmpUnusableException) throw it })
+                    runIcmp(address, ip, intervalMs)
                 }
                 val tcpPort = port ?: FALLBACK_TCP_PORT
                 emit(LatencyEvent.MethodSelected(PingMethod.TcpConnect(tcpPort), ip))
                 emitAll(tcp.probe(path.network, address, tcpPort, intervalMs))
             }
+
+        /**
+         * Returns once ICMP is unusable here, which is when `ping` ends before its first reply. A
+         * `ping` that ends after answering was working, so it is restarted after a backoff (and
+         * announced again via MethodSelected) instead of downgrading to TCP for good. A failing ping
+         * is not an error for the user: the caller switches to TCP and says so via MethodSelected.
+         */
+        private suspend fun FlowCollector<LatencyEvent>.runIcmp(
+            address: InetAddress,
+            ip: String,
+            intervalMs: Long,
+        ) {
+            var restart: Boolean
+            do {
+                restart = false
+                emit(LatencyEvent.MethodSelected(PingMethod.Icmp, ip))
+                emitAll(
+                    icmp.probe(address, intervalMs).catch {
+                        if (it !is IcmpUnusableException) throw it
+                        restart = it.hadReplies
+                    },
+                )
+                if (restart) delay(ICMP_RESTART_BACKOFF_MS)
+            } while (restart)
+        }
 
         private fun dnsEvents(
             path: WifiPath,

@@ -10,7 +10,7 @@ sealed interface PingLine {
         val duplicate: Boolean,
     ) : PingLine
 
-    /** `-O` report: no reply to [seq] yet (printed after the per-probe timeout). */
+    /** `-O` report: no reply to [seq] yet (printed when `ping` sends the next probe, one interval later). */
     data class NoAnswer(
         val seq: Int,
     ) : PingLine

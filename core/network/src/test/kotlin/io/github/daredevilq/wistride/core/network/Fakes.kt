@@ -34,16 +34,29 @@ class FakeNetworkHandle(
     var onConnect: (InetAddress, Int, Int) -> Unit = { _, _, _ -> },
 ) : NetworkHandle {
     val connects = mutableListOf<Triple<InetAddress, Int, Int>>()
+    var onOpen: () -> Unit = {}
+    var opened = 0
+    var closed = 0
 
     override fun resolve(host: String): List<InetAddress> = onResolve(host)
 
-    override fun connect(
-        address: InetAddress,
-        port: Int,
-        timeoutMs: Int,
-    ) {
-        connects += Triple(address, port, timeoutMs)
-        onConnect(address, port, timeoutMs)
+    override fun openConnection(): TcpConnection {
+        onOpen()
+        opened++
+        return object : TcpConnection {
+            override fun connect(
+                address: InetAddress,
+                port: Int,
+                timeoutMs: Int,
+            ) {
+                connects += Triple(address, port, timeoutMs)
+                onConnect(address, port, timeoutMs)
+            }
+
+            override fun close() {
+                closed++
+            }
+        }
     }
 }
 

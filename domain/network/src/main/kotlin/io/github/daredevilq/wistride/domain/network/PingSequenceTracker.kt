@@ -26,7 +26,7 @@ private const val SEQ_WRAP_THRESHOLD = 32_768
  * - [PingLine.NoAnswer] and [PingLine.Unreachable] with `seq > highest` report the gap and `seq` as lost.
  * - Anything with `seq <= highest` is dropped: duplicates (`DUP!`) and replies that arrive after
  *   `no answer yet` were already accounted for. A late reply keeps its probe lost on purpose: its RTT
- *   exceeded the timeout, so counting it would hide the very latency spike the user wants to see.
+ *   exceeded one interval, so counting it would hide the very latency spike the user wants to see.
  * - The 16-bit sequence counter wraps; a seq more than 32768 below `highest` is treated as a wrap and
  *   restarts the numbering.
  *

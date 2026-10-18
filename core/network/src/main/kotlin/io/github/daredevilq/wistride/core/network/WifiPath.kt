@@ -27,8 +27,17 @@ interface NetworkHandle {
     fun resolve(host: String): List<InetAddress>
 
     /**
-     * Opens a TCP connection to [address]:[port] over this network and closes it again. Throws
-     * `ConnectException` (refused/unreachable) or `SocketTimeoutException` (no answer in [timeoutMs]).
+     * Creates an unconnected TCP socket bound to this network. Separate from [TcpConnection.connect]
+     * so callers can time the handshake alone, without socket creation and teardown.
+     */
+    fun openConnection(): TcpConnection
+}
+
+/** A TCP socket of a [NetworkHandle]; [close] must not throw so it cannot discard a measurement. */
+interface TcpConnection : AutoCloseable {
+    /**
+     * Connects to [address]:[port]. Throws `ConnectException` (refused/unreachable) or
+     * `SocketTimeoutException` (no answer in [timeoutMs]).
      */
     fun connect(
         address: InetAddress,

@@ -1,6 +1,7 @@
 package io.github.daredevilq.wistride.core.network
 
 import com.google.common.truth.Truth.assertThat
+import io.github.daredevilq.wistride.domain.network.isIpLiteral
 import org.junit.Test
 import java.net.InetAddress
 
@@ -66,8 +67,15 @@ class LocalAddressTest {
     }
 
     @Test
+    fun `numeric literals are exactly what the UI classifier calls literals`() {
+        listOf("8.8.8.8", "2001:4860::8888", "google.com", "999.1.1.1", "1.2.3", "10.0.0").forEach {
+            assertThat(parseIpLiteral(it) != null).isEqualTo(isIpLiteral(it))
+        }
+    }
+
+    @Test
     fun `host names and malformed literals are not literals`() {
-        listOf("google.com", "999.1.1.1", "1.2.3", "::zz::", "").forEach {
+        listOf("google.com", "999.1.1.1", "1.2.3", "::zz::", "fe80::1%nosuchif0", "").forEach {
             assertThat(parseIpLiteral(it)).isNull()
         }
     }
