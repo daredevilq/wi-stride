@@ -30,6 +30,12 @@ data class PingSettings(
         const val DEFAULT_INTERVAL_MS: Long = 1_000L
 
         /**
+         * Upper bound of the target list. Every target owns a `ping` process or a TCP prober, so this
+         * bounds the processes and the work per probe tick.
+         */
+        const val MAX_TARGETS: Int = 20
+
+        /**
          * Offered probe intervals. 500 ms is the floor: the system `ping` refuses intervals below 200 ms
          * for non-root users, and faster probing adds load without making the statistics more useful.
          */

@@ -31,9 +31,10 @@ private const val PING_SETTINGS_FILE = "ping_settings.json"
 private const val PERMISSION_REQUESTS_FILE = "permission_requests"
 
 /**
- * Provides the two app-wide DataStores. Separate from [DataStoreBindingsModule] so tests can
- * replace the provision (DataStore allows one active instance per file per process, and Hilt tests
- * build a new singleton component per test) and keep the real bindings.
+ * Provides the two app-wide DataStores. Separate from [DataStoreBindingsModule] so Hilt tests can
+ * replace the bindings (`TestDataStoreModule` takes the place of [DataStoreBindingsModule]) with
+ * in-memory implementations: DataStore allows one active instance per file per process, and Hilt
+ * tests build a new singleton component per test.
  */
 @Module
 @InstallIn(SingletonComponent::class)

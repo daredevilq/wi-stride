@@ -7,7 +7,9 @@ import io.github.daredevilq.wistride.core.model.ping.PingTarget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertThrows
@@ -15,6 +17,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.io.IOException
 
 class DataStorePingSettingsRepositoryTest {
     @get:Rule
@@ -162,5 +165,48 @@ class DataStorePingSettingsRepositoryTest {
             val loaded = repository().settings.first()
             assertThat(loaded.intervalMs).isEqualTo(PingSettings.DEFAULT_INTERVAL_MS)
             assertThat(loaded.targets).containsExactly(PingTarget.Gateway)
+        }
+
+    @Test
+    fun addTargetRejectsGrowingPastTheLimitButStillReturnsDuplicates() =
+        runBlocking<Unit> {
+            val repo = repository()
+            val room = PingSettings.MAX_TARGETS - PingSettings.DEFAULT_TARGETS.size
+            repeat(room) { repo.addTarget("host$it.example", null) }
+            assertThat(repo.settings.first().targets).hasSize(PingSettings.MAX_TARGETS)
+
+            assertThrows(
+                IllegalArgumentException::class.java,
+            ) { runBlocking { repo.addTarget("one-more.example", null) } }
+            assertThat(repo.settings.first().targets).hasSize(PingSettings.MAX_TARGETS)
+            assertThat(repo.addTarget("HOST0.example", null).host).isEqualTo("host0.example")
+        }
+
+    @Test
+    fun readFailureFallsBackToDefaults() =
+        runBlocking<Unit> {
+            val failing =
+                object : DataStore<PingSettingsDto> {
+                    override val data: Flow<PingSettingsDto> = flow { throw IOException("disk unavailable") }
+
+                    override suspend fun updateData(transform: suspend (t: PingSettingsDto) -> PingSettingsDto) =
+                        throw IOException("disk unavailable")
+                }
+            assertThat(DataStorePingSettingsRepository(failing).settings.first()).isEqualTo(PingSettings.DEFAULT)
+        }
+
+    @Test
+    fun nonIoReadFailuresPropagate() =
+        runBlocking<Unit> {
+            val failing =
+                object : DataStore<PingSettingsDto> {
+                    override val data: Flow<PingSettingsDto> = flow { throw IllegalStateException("bug") }
+
+                    override suspend fun updateData(transform: suspend (t: PingSettingsDto) -> PingSettingsDto) =
+                        throw IllegalStateException("bug")
+                }
+            assertThrows(IllegalStateException::class.java) {
+                runBlocking { DataStorePingSettingsRepository(failing).settings.first() }
+            }
         }
 }

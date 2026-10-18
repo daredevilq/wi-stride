@@ -4,7 +4,9 @@ import androidx.datastore.core.DataStore
 import io.github.daredevilq.wistride.core.model.ping.PingSettings
 import io.github.daredevilq.wistride.core.model.ping.PingTarget
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
 
@@ -14,7 +16,11 @@ class DataStorePingSettingsRepository
     constructor(
         private val store: DataStore<PingSettingsDto>,
     ) : PingSettingsRepository {
-        override val settings: Flow<PingSettings> = store.data.map { it.toDomain() }
+        // A failed read (I/O error) must not kill the screen's flow: fall back to the defaults, like a corrupt file.
+        override val settings: Flow<PingSettings> =
+            store.data
+                .catch { if (it is IOException) emit(PingSettingsDto.DEFAULT) else throw it }
+                .map { it.toDomain() }
 
         override suspend fun addTarget(
             host: String,
@@ -30,6 +36,9 @@ class DataStorePingSettingsRepository
                     result = existing
                     current
                 } else {
+                    require(current.targets.size < PingSettings.MAX_TARGETS) {
+                        "At most ${PingSettings.MAX_TARGETS} targets are allowed"
+                    }
                     val created = PingTargetDto.Host(id = "user:${UUID.randomUUID()}", host = host, port = port)
                     result = created
                     current.copy(targets = current.targets + created)

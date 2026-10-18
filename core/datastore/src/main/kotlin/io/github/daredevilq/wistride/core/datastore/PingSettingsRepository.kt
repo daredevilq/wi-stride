@@ -9,7 +9,11 @@ interface PingSettingsRepository {
     /** Current settings first, then after every change; [PingSettings.DEFAULT] until the user edits them. */
     val settings: Flow<PingSettings>
 
-    /** Appends a user target; [host] and [port] must already be validated. Returns the stored target. */
+    /**
+     * Appends a user target; [host] and [port] must already be validated. Returns the stored target
+     * (the existing one for a duplicate). Throws [IllegalArgumentException] when the list already
+     * holds [PingSettings.MAX_TARGETS] targets; the UI prevents that.
+     */
     suspend fun addTarget(
         host: String,
         port: Int?,
