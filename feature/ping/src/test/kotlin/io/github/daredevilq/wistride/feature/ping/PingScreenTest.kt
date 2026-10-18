@@ -236,7 +236,7 @@ class PingScreenTest {
     fun overflowMenuRestoresDefaults() {
         var restored = false
         show(content(measured()), PingActions(onRestoreDefaults = { restored = true }))
-        rule.onNodeWithContentDescription("More options").performClick()
+        rule.onNodeWithContentDescription("More ping options").performClick()
         rule.onNodeWithText("Restore default targets").performClick()
         assertEquals(true, restored)
     }

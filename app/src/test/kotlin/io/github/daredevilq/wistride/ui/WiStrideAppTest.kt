@@ -57,13 +57,23 @@ class WiStrideAppTest {
         check(rule.onAllNodes(shown).fetchSemanticsNodes().isNotEmpty()) { "Now screen not shown" }
     }
 
+    // Ping shows its actions instead of a title; which state it settles in depends on the shadows.
+    private fun assertPingShown() {
+        val shown = hasText("Preparing measurements", substring = true) or hasText("Add target")
+        check(rule.onAllNodes(shown).fetchSemanticsNodes().isNotEmpty()) { "Ping screen not shown" }
+    }
+
     @Test
     fun clickingEachTabShowsItsScreen() {
         rule.setContent { WiStrideTheme { WiStrideApp() } }
         listOf("Now", "Ping", "Networks", "Speed", "Map").forEach { label ->
             rule.onNode(tab(label)).performClick()
             rule.onNode(tab(label) and isSelected()).assertIsSelected()
-            if (label == "Now") assertNowShown() else assertScreenShown(label)
+            when (label) {
+                "Now" -> assertNowShown()
+                "Ping" -> assertPingShown()
+                else -> assertScreenShown(label)
+            }
         }
     }
 

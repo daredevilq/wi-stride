@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="feature_ping_title">Ping</string>
   <string name="ping_loading">Preparing measurements…</string>
 
   <!-- Numbers -->
@@ -13,8 +12,7 @@
   <string name="ping_action_add">Add target</string>
   <string name="ping_action_interval">Interval: %1$s</string>
   <string name="ping_interval_current">%1$s (current)</string>
-  <string name="ping_action_more">More options</string>
-  <string name="ping_overflow_glyph">⋮</string>
+  <string name="ping_action_more">More ping options</string>
   <string name="ping_action_restore">Restore default targets</string>
 
   <!-- Screen states -->

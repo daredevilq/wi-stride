@@ -19,12 +19,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,9 +31,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import io.github.daredevilq.wistride.core.designsystem.component.StatusCard
 import io.github.daredevilq.wistride.core.designsystem.component.StatusTone
@@ -71,7 +69,7 @@ internal fun PingScreen(
         modifier = modifier,
         // The enclosing app scaffold already consumed the system bar insets.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = { PingTopBar(state.intervalMs(), actions, onAdd = { showAddDialog = true }) },
+        topBar = { PingToolbar(state.intervalMs(), actions, onAdd = { showAddDialog = true }) },
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             when (state) {
@@ -101,25 +99,25 @@ private fun PingUiState.intervalMs(): Long? =
         is PingUiState.Content -> intervalMs
     }
 
-@OptIn(ExperimentalMaterial3Api::class) // TopAppBar is still experimental in the pinned Material 3 version.
+/** Screen actions in a toolbar row: the app shell's top bar already shows the title and app menu. */
 @Composable
-private fun PingTopBar(
+private fun PingToolbar(
     intervalMs: Long?,
     actions: PingActions,
     onAdd: () -> Unit,
 ) {
-    TopAppBar(
-        title = { Text(stringResource(R.string.feature_ping_title)) },
-        actions = {
-            if (intervalMs != null) {
-                TextButton(onClick = onAdd, modifier = Modifier.defaultMinSize(minHeight = MinTouchTarget)) {
-                    Text(stringResource(R.string.ping_action_add))
-                }
-                IntervalMenu(intervalMs, actions.onSetInterval)
-                OverflowMenu(actions.onRestoreDefaults)
-            }
-        },
-    )
+    if (intervalMs == null) return
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = WiStrideTheme.spacing.s),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        TextButton(onClick = onAdd, modifier = Modifier.defaultMinSize(minHeight = MinTouchTarget)) {
+            Text(stringResource(R.string.ping_action_add))
+        }
+        IntervalMenu(intervalMs, actions.onSetInterval)
+        OverflowMenu(actions.onRestoreDefaults)
+    }
 }
 
 @Composable
@@ -155,11 +153,7 @@ private fun OverflowMenu(onRestoreDefaults: () -> Unit) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     Box {
         IconButton(onClick = { expanded = true }, modifier = Modifier.defaultMinSize(MinTouchTarget, MinTouchTarget)) {
-            // A text glyph avoids pulling in the icon library for a single overflow marker.
-            Text(
-                text = stringResource(R.string.ping_overflow_glyph),
-                modifier = Modifier.semantics { contentDescription = moreLabel },
-            )
+            Icon(painterResource(R.drawable.ic_more_vert), contentDescription = moreLabel)
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
