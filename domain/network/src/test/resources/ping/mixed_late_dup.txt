@@ -1,0 +1,8 @@
+PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+[1792314000.100000] 64 bytes from 8.8.8.8: icmp_seq=1 ttl=113 time=14.2 ms
+[1792314001.200000] no answer yet for icmp_seq=2
+[1792314002.300000] 64 bytes from 8.8.8.8: icmp_seq=3 ttl=113 time=3100 ms
+[1792314002.400000] 64 bytes from 8.8.8.8: icmp_seq=2 ttl=113 time=2900 ms
+[1792314002.500000] 64 bytes from 8.8.8.8: icmp_seq=3 ttl=113 time=3101 ms (DUP!)
+[1792314003.600000] From 192.168.1.5 icmp_seq=4 Destination Host Unreachable
+[1792314004.700000] 64 bytes from 8.8.8.8: icmp_seq=5 ttl=113 time<1 ms
