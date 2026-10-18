@@ -1,4 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="feature_ping_title">Ping</string>
+  <string name="ping_loading">Przygotowuję pomiary…</string>
+
+  <!-- Numbers -->
+  <string name="ping_ms">%1$s ms</string>
+  <string name="ping_percent">%1$s%%</string>
+  <string name="ping_interval_seconds">%1$s s</string>
+  <string name="ping_no_value">—</string>
+
+  <!-- Top bar -->
+  <string name="ping_action_add">Dodaj cel</string>
+  <string name="ping_action_interval">Interwał: %1$s</string>
+  <string name="ping_interval_current">%1$s (bieżący)</string>
+  <string name="ping_action_more">Więcej opcji</string>
+  <string name="ping_overflow_glyph">⋮</string>
+  <string name="ping_action_restore">Przywróć domyślne cele</string>
+
+  <!-- Screen states -->
+  <string name="ping_empty_title">Brak celów</string>
+  <string name="ping_empty_message">Dodaj nazwę hosta lub adres IP, aby zmierzyć opóźnienie, albo przywróć domyślną listę.</string>
+  <string name="ping_no_wifi_title">Brak połączenia z Wi-Fi</string>
+  <string name="ping_no_wifi_message">Opóźnienie jest mierzone tylko przez Wi-Fi, nigdy przez dane komórkowe. Połącz się z siecią, aby zacząć.</string>
+  <string name="ping_no_wifi_action">Wybierz sieć</string>
+  <string name="ping_detail_placeholder">Wybierz cel, aby zobaczyć jego wykres i szczegóły.</string>
+
+  <!-- Target card -->
+  <string name="ping_gateway">Brama</string>
+  <string name="ping_chip_dns">DNS %1$s</string>
+  <string name="ping_method_icmp">ICMP</string>
+  <string name="ping_method_tcp">TCP:%1$d</string>
+  <string name="ping_measuring">Mierzę…</string>
+  <string name="ping_lost">Brak odpowiedzi</string>
+  <string name="ping_unavailable">Niedostępne</string>
+  <string name="ping_stat_min">Min</string>
+  <string name="ping_stat_avg">Śr.</string>
+  <string name="ping_stat_max">Maks.</string>
+  <string name="ping_stat_jitter">Jitter</string>
+  <string name="ping_stat_loss">Utrata</string>
+
+  <!-- Unavailable reasons -->
+  <string name="ping_reason_no_wifi">Brak połączenia z Wi-Fi.</string>
+  <string name="ping_reason_no_gateway">Ta sieć nie ma bramy, którą można zmierzyć.</string>
+  <string name="ping_reason_unknown_host">Nie udało się rozwiązać nazwy hosta w tej sieci.</string>
+  <string name="ping_reason_needs_permission">Dostęp do urządzeń w sieci lokalnej wymaga zgody.</string>
+  <string name="ping_permission_title">Zezwól na dostęp do urządzeń w sieci lokalnej</string>
+  <string name="ping_permission_rationale">Android 17 i nowsze pytają o tę zgodę, zanim aplikacja może połączyć się z urządzeniami w sieci domowej, np. z routerem. WiStride używa jej wyłącznie do pomiaru opóźnienia do tych urządzeń.</string>
+
+  <!-- Detail -->
+  <string name="ping_detail_back">Wróć do listy</string>
+  <string name="ping_action_delete">Usuń cel</string>
+  <string name="ping_chart_title">Opóźnienie, ostatnie %1$d prób</string>
+  <string name="ping_chart_no_data">Brak jeszcze udanych prób.</string>
+  <string name="ping_chart_summary">Ostatnie próby: %1$d · min %2$s · maks. %3$s · utracone %4$d</string>
+  <string name="ping_section_stats">Statystyki</string>
+  <string name="ping_stat_current">Bieżące</string>
+  <string name="ping_stat_min_long">Minimalne</string>
+  <string name="ping_stat_avg_long">Średnie</string>
+  <string name="ping_stat_max_long">Maksymalne</string>
+  <string name="ping_stat_jitter_long">Jitter</string>
+  <string name="ping_stat_loss_long">Utrata pakietów</string>
+  <string name="ping_stat_probes">Udane próby</string>
+  <string name="ping_probes_value">%1$d z %2$d</string>
+  <string name="ping_section_connection">Połączenie</string>
+  <string name="ping_method">Metoda</string>
+  <string name="ping_method_icmp_description">ICMP echo (systemowy ping)</string>
+  <string name="ping_method_tcp_description">Połączenie TCP z portem %1$d</string>
+  <string name="ping_address">Rozwiązany adres</string>
+  <string name="ping_dns_time">Czas zapytania DNS</string>
+
+  <!-- Add target dialog -->
+  <string name="ping_add_title">Dodaj cel</string>
+  <string name="ping_add_host">Nazwa hosta lub adres IP</string>
+  <string name="ping_add_port">Port (opcjonalnie)</string>
+  <string name="ping_add_port_helper">Z portem mierzony jest czas nawiązania połączenia TCP</string>
+  <string name="ping_add_hint">Bez portu cel jest pingowany przez ICMP.</string>
+  <string name="ping_add_confirm">Dodaj</string>
+  <string name="ping_add_cancel">Anuluj</string>
+  <string name="ping_error_empty_host">Wpisz nazwę hosta lub adres IP.</string>
+  <string name="ping_error_invalid_host">To nie jest poprawna nazwa hosta ani adres IP.</string>
+  <string name="ping_error_invalid_port">Wpisz port od 1 do 65535.</string>
 </resources>

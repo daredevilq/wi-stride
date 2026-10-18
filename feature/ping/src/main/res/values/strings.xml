@@ -1,4 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="feature_ping_title">Ping</string>
+  <string name="ping_loading">Preparing measurements…</string>
+
+  <!-- Numbers -->
+  <string name="ping_ms">%1$s ms</string>
+  <string name="ping_percent">%1$s%%</string>
+  <string name="ping_interval_seconds">%1$s s</string>
+  <string name="ping_no_value">—</string>
+
+  <!-- Top bar -->
+  <string name="ping_action_add">Add target</string>
+  <string name="ping_action_interval">Interval: %1$s</string>
+  <string name="ping_interval_current">%1$s (current)</string>
+  <string name="ping_action_more">More options</string>
+  <string name="ping_overflow_glyph">⋮</string>
+  <string name="ping_action_restore">Restore default targets</string>
+
+  <!-- Screen states -->
+  <string name="ping_empty_title">No targets</string>
+  <string name="ping_empty_message">Add a host name or an IP address to measure its latency, or restore the default list.</string>
+  <string name="ping_no_wifi_title">Not connected to Wi-Fi</string>
+  <string name="ping_no_wifi_message">Latency is measured only over Wi-Fi, never over mobile data. Connect to a network to start.</string>
+  <string name="ping_no_wifi_action">Choose a network</string>
+  <string name="ping_detail_placeholder">Select a target to see its chart and details.</string>
+
+  <!-- Target card -->
+  <string name="ping_gateway">Gateway</string>
+  <string name="ping_chip_dns">DNS %1$s</string>
+  <string name="ping_method_icmp">ICMP</string>
+  <string name="ping_method_tcp">TCP:%1$d</string>
+  <string name="ping_measuring">Measuring…</string>
+  <string name="ping_lost">No reply</string>
+  <string name="ping_unavailable">Unavailable</string>
+  <string name="ping_stat_min">Min</string>
+  <string name="ping_stat_avg">Avg</string>
+  <string name="ping_stat_max">Max</string>
+  <string name="ping_stat_jitter">Jitter</string>
+  <string name="ping_stat_loss">Loss</string>
+
+  <!-- Unavailable reasons -->
+  <string name="ping_reason_no_wifi">Not connected to Wi-Fi.</string>
+  <string name="ping_reason_no_gateway">This network has no gateway to measure.</string>
+  <string name="ping_reason_unknown_host">The host name could not be resolved on this network.</string>
+  <string name="ping_reason_needs_permission">Reaching devices on your local network needs permission.</string>
+  <string name="ping_permission_title">Allow access to local network devices</string>
+  <string name="ping_permission_rationale">Android 17 and newer ask for this permission before an app may reach devices in your home network, such as the router. WiStride uses it only to measure latency to them.</string>
+
+  <!-- Detail -->
+  <string name="ping_detail_back">Back to the list</string>
+  <string name="ping_action_delete">Delete target</string>
+  <string name="ping_chart_title">Latency, last %1$d probes</string>
+  <string name="ping_chart_no_data">No answered probes yet.</string>
+  <string name="ping_chart_summary">Last probes: %1$d · min %2$s · max %3$s · lost %4$d</string>
+  <string name="ping_section_stats">Statistics</string>
+  <string name="ping_stat_current">Current</string>
+  <string name="ping_stat_min_long">Minimum</string>
+  <string name="ping_stat_avg_long">Average</string>
+  <string name="ping_stat_max_long">Maximum</string>
+  <string name="ping_stat_jitter_long">Jitter</string>
+  <string name="ping_stat_loss_long">Packet loss</string>
+  <string name="ping_stat_probes">Answered probes</string>
+  <string name="ping_probes_value">%1$d of %2$d</string>
+  <string name="ping_section_connection">Connection</string>
+  <string name="ping_method">Method</string>
+  <string name="ping_method_icmp_description">ICMP echo (system ping)</string>
+  <string name="ping_method_tcp_description">TCP connect to port %1$d</string>
+  <string name="ping_address">Resolved address</string>
+  <string name="ping_dns_time">DNS lookup time</string>
+
+  <!-- Add target dialog -->
+  <string name="ping_add_title">Add target</string>
+  <string name="ping_add_host">Host name or IP address</string>
+  <string name="ping_add_port">Port (optional)</string>
+  <string name="ping_add_port_helper">With a port, the time to open a TCP connection is measured</string>
+  <string name="ping_add_hint">Without a port the target is pinged with ICMP.</string>
+  <string name="ping_add_confirm">Add</string>
+  <string name="ping_add_cancel">Cancel</string>
+  <string name="ping_error_empty_host">Enter a host name or an IP address.</string>
+  <string name="ping_error_invalid_host">This is not a valid host name or IP address.</string>
+  <string name="ping_error_invalid_port">Enter a port from 1 to 65535.</string>
 </resources>
