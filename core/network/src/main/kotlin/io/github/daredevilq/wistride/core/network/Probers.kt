@@ -19,9 +19,9 @@ class IcmpUnusableException(
 /** ICMP echo probing through the system `ping` binary. */
 interface IcmpProber {
     /**
-     * One long-running `ping` process per collection. Emits a probe per reply or loss (lost = no reply within one [intervalMs]); fails with
-     * [IcmpUnusableException] when the process cannot start or ends. Cancelling the collector
-     * destroys the process.
+     * One long-running `ping` process per collection. Emits a probe per reply or loss (lost = no
+     * reply within one [intervalMs]); fails with [IcmpUnusableException] when the process cannot
+     * start or ends. Cancelling the collector destroys the process.
      */
     fun probe(
         address: InetAddress,
