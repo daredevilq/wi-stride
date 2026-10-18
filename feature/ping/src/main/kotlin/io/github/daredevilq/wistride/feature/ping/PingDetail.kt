@@ -124,7 +124,7 @@ private fun ConnectionSection(target: TargetUi) {
     ValueRow(stringResource(R.string.ping_method), target.method?.description())
     ValueRow(stringResource(R.string.ping_address), target.address)
     // Only host names are resolved; for an IP literal or the gateway DNS is not applicable.
-    if (target.host != null) {
+    if (target.resolvesDns) {
         ValueRow(stringResource(R.string.ping_dns_time), target.dnsMs?.let { msText(it) })
     }
 }

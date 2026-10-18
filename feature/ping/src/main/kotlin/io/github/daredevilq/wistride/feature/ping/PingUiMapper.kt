@@ -8,6 +8,7 @@ import io.github.daredevilq.wistride.core.model.ping.PingSettings
 import io.github.daredevilq.wistride.core.model.ping.PingTarget
 import io.github.daredevilq.wistride.domain.network.PING_STATS_WINDOW
 import io.github.daredevilq.wistride.domain.network.computePingStats
+import io.github.daredevilq.wistride.domain.network.isIpLiteral
 
 internal const val CHART_HISTORY_SIZE = 120
 internal const val SPARKLINE_SIZE = 30
@@ -55,6 +56,7 @@ internal fun TargetRuntime.toUi(target: PingTarget): TargetUi =
         currentMs = probes.lastOrNull(),
         sparkline = probes.takeLast(SPARKLINE_SIZE),
         chart = probes,
+        resolvesDns = (target as? PingTarget.Host)?.host?.let { !isIpLiteral(it) } ?: false,
         dnsMs = dnsMs,
         unavailable = unavailable,
     )

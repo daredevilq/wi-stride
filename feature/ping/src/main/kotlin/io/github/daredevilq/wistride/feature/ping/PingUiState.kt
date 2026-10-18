@@ -53,6 +53,8 @@ data class TargetUi(
     val sparkline: List<Double?>,
     /** Last 120 probes, oldest first, null = lost. */
     val chart: List<Double?>,
+    /** True for host names: only they are resolved, so only they have a DNS time. */
+    val resolvesDns: Boolean,
     val dnsMs: Double?,
     /** Non-null while the target cannot be measured; numbers are then not shown. */
     val unavailable: LatencyUnavailableReason?,

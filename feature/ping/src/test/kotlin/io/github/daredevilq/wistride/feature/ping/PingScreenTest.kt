@@ -50,6 +50,13 @@ class PingScreenTest {
             dnsMs = 12.0.takeIf { id != "gateway" },
         )
 
+    @Test
+    fun detailOmitsDnsRowForIpLiterals() {
+        show(content(measured("8.8.8.8"), selectedId = "8.8.8.8"), PingActions())
+        rule.onNodeWithText("Resolved address").assertExists()
+        rule.onNodeWithText("DNS lookup time").assertDoesNotExist()
+    }
+
     private fun count(text: String) = rule.onAllNodesWithText(text).fetchSemanticsNodes().size
 
     @Test

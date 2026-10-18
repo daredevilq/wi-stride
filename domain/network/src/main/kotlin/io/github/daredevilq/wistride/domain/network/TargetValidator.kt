@@ -75,7 +75,7 @@ private fun isValidLabel(label: String): Boolean =
         !label.endsWith('-') &&
         label.all { it in 'a'..'z' || isDigit(it) || it == '-' }
 
-private fun isIpv4(parts: List<String>): Boolean =
+internal fun isIpv4(parts: List<String>): Boolean =
     parts.size == IPV4_PARTS &&
         parts.all { it.length in 1..MAX_OCTET_DIGITS && it.all(::isDigit) && it.toInt() <= MAX_OCTET }
 

@@ -125,6 +125,16 @@ class TargetValidatorTest {
         assertThat(errorOf("bad host", "abc")).isEqualTo(TargetInputError.InvalidHost)
     }
 
+    @Test
+    fun ipLiteralsAreToldApartFromHostNames() {
+        for (literal in listOf("8.8.8.8", "192.168.1.1", "2001:4860:4860::8888", "fe80::1%wlan0")) {
+            assertThat(isIpLiteral(literal)).isTrue()
+        }
+        for (name in listOf("google.com", "router", "1.2.3", "x.com")) {
+            assertThat(isIpLiteral(name)).isFalse()
+        }
+    }
+
     private companion object {
         const val MAX_LABEL = 63
         const val MAX_HOST = 253
