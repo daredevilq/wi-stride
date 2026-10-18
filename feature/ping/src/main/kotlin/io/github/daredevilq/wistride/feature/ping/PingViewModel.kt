@@ -14,9 +14,11 @@ import io.github.daredevilq.wistride.core.model.ping.PingTarget
 import io.github.daredevilq.wistride.core.network.LatencyMonitor
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,8 +28,10 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -53,6 +57,12 @@ class PingViewModel
         // Null until the route reports the first resolved snapshot; nothing is measured before that.
         private val permission = MutableStateFlow<PermissionSnapshot?>(null)
         private val runtimes = MutableStateFlow<Map<String, TargetRuntime>>(emptyMap())
+
+        // Job.cancel() does not wait, so a cancelled collection can still deliver one more event after its
+        // state was cleared. Events are accepted only from the job registered for the target, and
+        // registration changes and event writes share this lock so the check and the write are atomic.
+        private val stateLock = Any()
+        private val activeJobs = mutableMapOf<String, Job>()
         private val selectedId = savedState.getStateFlow<String?>(KEY_SELECTED_ID, null)
 
         @OptIn(ExperimentalCoroutinesApi::class) // flatMapLatest has no stable alternative for re-subscribing.
@@ -63,6 +73,8 @@ class PingViewModel
                 // The monitor checks permissions only when a target's collection starts, so a changed
                 // grant set needs fresh collections even when the status stays the same.
                 .flatMapLatest { measure(it) }
+                // Mapping every event to UI state is CPU work that does not belong on Main.
+                .flowOn(defaultDispatcher)
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), PingUiState.Loading)
 
         /** Called by the route with every resolved local-network permission snapshot. */
@@ -99,7 +111,10 @@ class PingViewModel
         private fun measure(snapshot: PermissionSnapshot): Flow<PingUiState> =
             flow {
                 // A history kept across a restart or an unsubscribed gap would draw a line over the missing time.
-                runtimes.value = emptyMap()
+                synchronized(stateLock) {
+                    activeJobs.clear()
+                    runtimes.value = emptyMap()
+                }
                 coroutineScope {
                     val settings = MutableStateFlow<PingSettings?>(null)
                     superviseTargets(settings)
@@ -116,23 +131,30 @@ class PingViewModel
          */
         private fun CoroutineScope.superviseTargets(latest: MutableStateFlow<PingSettings?>) =
             launch {
-                val jobs = mutableMapOf<String, Job>()
                 var intervalMs: Long? = null
                 settingsRepository.settings.collect { settings ->
-                    if (settings.intervalMs != intervalMs) {
-                        jobs.values.forEach(Job::cancel)
-                        jobs.clear()
-                        runtimes.value = emptyMap()
-                        intervalMs = settings.intervalMs
-                    }
-                    val ids = settings.targets.map(PingTarget::id).toSet()
-                    (jobs.keys - ids).forEach { id ->
-                        jobs.remove(id)?.cancel()
-                        runtimes.update { it - id }
-                    }
-                    settings.targets.filter { it.id !in jobs }.forEach { target ->
-                        runtimes.update { it - target.id }
-                        jobs[target.id] = launch(defaultDispatcher) { collectTarget(target, settings.intervalMs) }
+                    synchronized(stateLock) {
+                        if (settings.intervalMs != intervalMs) {
+                            activeJobs.values.forEach(Job::cancel)
+                            activeJobs.clear()
+                            runtimes.value = emptyMap()
+                            intervalMs = settings.intervalMs
+                        }
+                        val ids = settings.targets.map(PingTarget::id).toSet()
+                        (activeJobs.keys - ids).forEach { id ->
+                            activeJobs.remove(id)?.cancel()
+                            runtimes.update { it - id }
+                        }
+                        settings.targets.filter { it.id !in activeJobs }.forEach { target ->
+                            runtimes.update { it - target.id }
+                            // Registered before it runs, otherwise its first events would be rejected.
+                            val job =
+                                launch(defaultDispatcher, CoroutineStart.LAZY) {
+                                    collectTarget(target, settings.intervalMs)
+                                }
+                            activeJobs[target.id] = job
+                            job.start()
+                        }
                     }
                     latest.value = settings
                 }
@@ -142,8 +164,15 @@ class PingViewModel
             target: PingTarget,
             intervalMs: Long,
         ) {
+            val job = currentCoroutineContext().job
             monitor.monitor(target, intervalMs).collect { event ->
-                runtimes.update { all -> all + (target.id to (all[target.id] ?: TargetRuntime()).apply(event)) }
+                synchronized(stateLock) {
+                    if (activeJobs[target.id] === job) {
+                        runtimes.update { all ->
+                            all + (target.id to (all[target.id] ?: TargetRuntime()).apply(event))
+                        }
+                    }
+                }
             }
         }
     }

@@ -75,7 +75,7 @@ internal fun toPingUiState(
         }
 
         targets.all { it.unavailable == LatencyUnavailableReason.NoWifi } -> {
-            PingUiState.NoWifi(settings.intervalMs)
+            PingUiState.NoWifi(settings.intervalMs, targets.size)
         }
 
         else -> {

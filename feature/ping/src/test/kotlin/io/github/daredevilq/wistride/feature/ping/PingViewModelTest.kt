@@ -10,10 +10,14 @@ import io.github.daredevilq.wistride.core.model.ping.LatencyUnavailableReason
 import io.github.daredevilq.wistride.core.model.ping.PingMethod
 import io.github.daredevilq.wistride.core.model.ping.PingSettings
 import io.github.daredevilq.wistride.core.model.ping.PingTarget
+import io.github.daredevilq.wistride.core.network.LatencyMonitor
 import io.github.daredevilq.wistride.core.testing.MainDispatcherRule
 import io.github.daredevilq.wistride.domain.network.PING_STATS_WINDOW
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -243,7 +247,9 @@ class PingViewModelTest {
             collectState()
             defaultIds.forEach { monitor.emit(it, LatencyEvent.Unavailable(LatencyUnavailableReason.NoWifi)) }
             runCurrent()
-            assertThat(viewModel.uiState.value).isEqualTo(PingUiState.NoWifi(PingSettings.DEFAULT_INTERVAL_MS))
+            assertThat(
+                viewModel.uiState.value,
+            ).isEqualTo(PingUiState.NoWifi(PingSettings.DEFAULT_INTERVAL_MS, defaultIds.size))
         }
 
     @Test
@@ -327,10 +333,49 @@ class PingViewModelTest {
         }
 
     @Test
+    fun aCancelledCollectionCannotWriteIntoTheNextSession() =
+        runTest(dispatcher) {
+            // Delivers one more event while it is being cancelled, like a collection that is still winding down.
+            val leaking =
+                PingViewModel(
+                    repository,
+                    LingeringMonitor,
+                    InMemoryPermissionRequestHistory(),
+                    SavedStateHandle(),
+                    dispatcher,
+                )
+            leaking.onPermissionChanged(snapshotOf(PermissionStatus.Granted))
+            backgroundScope.launch { leaking.uiState.collect {} }
+            runCurrent()
+
+            repository.state.value = repository.state.value.copy(intervalMs = 2_000L)
+            runCurrent()
+
+            val state = leaking.uiState.value as PingUiState.Content
+            assertThat(state.targets.map { it.stats.sent }.toSet()).containsExactly(0)
+        }
+
+    @Test
     fun targetUiForHostCarriesItsName() {
         val ui = TargetRuntime().toUi(PingTarget.Host("a", "example.org", 22))
         assertThat(ui.host).isEqualTo("example.org")
         assertThat(ui.stats.sent).isEqualTo(0)
         assertThat(ui.currentMs).isNull()
     }
+}
+
+private object LingeringMonitor : LatencyMonitor {
+    override fun monitor(
+        target: PingTarget,
+        intervalMs: Long,
+    ): Flow<LatencyEvent> =
+        object : Flow<LatencyEvent> {
+            override suspend fun collect(collector: FlowCollector<LatencyEvent>) {
+                try {
+                    awaitCancellation()
+                } finally {
+                    collector.emit(probe(1.0))
+                }
+            }
+        }
 }

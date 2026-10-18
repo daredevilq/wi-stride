@@ -15,6 +15,7 @@ import io.github.daredevilq.wistride.core.designsystem.theme.WiStrideTheme
 import io.github.daredevilq.wistride.core.model.permission.PermissionStatus
 import io.github.daredevilq.wistride.core.model.ping.LatencyUnavailableReason
 import io.github.daredevilq.wistride.core.model.ping.PingMethod
+import io.github.daredevilq.wistride.core.model.ping.PingSettings
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -134,7 +135,7 @@ class PingScreenTest {
     @Test
     fun noWifiIsAScreenLevelStateWithWifiPanelAction() {
         var opened = false
-        show(PingUiState.NoWifi(1_000L), PingActions(onOpenWifiPanel = { opened = true }))
+        show(PingUiState.NoWifi(1_000L, targetCount = 3), PingActions(onOpenWifiPanel = { opened = true }))
         rule.onNodeWithText("Not connected to Wi-Fi").assertExists()
         rule.onNodeWithText("Choose a network").performClick()
         assertEquals(true, opened)
@@ -184,6 +185,21 @@ class PingScreenTest {
         )
         rule.onNodeWithText("Open settings").performClick()
         assertEquals(true, opened)
+    }
+
+    @Test
+    fun addActionStaysEnabledBelowTheTargetLimit() {
+        show(content(measured("a.org")))
+        rule.onNodeWithText("Add target").assertIsEnabled()
+        assertEquals(0, count("Target limit reached (20). Remove one to add another."))
+    }
+
+    @Test
+    fun addActionIsDisabledAtTheTargetLimitAndExplainsWhy() {
+        val targets = Array(PingSettings.MAX_TARGETS) { measured("host$it.org") }
+        show(content(*targets))
+        rule.onNodeWithText("Add target").assertIsNotEnabled()
+        rule.onNodeWithText("Target limit reached (20). Remove one to add another.").assertExists()
     }
 
     @Test

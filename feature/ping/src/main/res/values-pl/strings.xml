@@ -10,6 +10,7 @@
 
   <!-- Top bar -->
   <string name="ping_action_add">Dodaj cel</string>
+  <string name="ping_limit_reached">Osiągnięto limit celów (%1$d). Usuń jeden, aby dodać kolejny.</string>
   <string name="ping_action_interval">Interwał: %1$s</string>
   <string name="ping_interval_current">%1$s (bieżący)</string>
   <string name="ping_action_more">Więcej opcji pingu</string>

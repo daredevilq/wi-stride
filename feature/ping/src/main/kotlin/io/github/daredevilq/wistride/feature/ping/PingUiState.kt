@@ -22,6 +22,8 @@ sealed interface PingUiState {
     @Immutable
     data class NoWifi(
         val intervalMs: Long,
+        /** Size of the target list, to know whether another target can still be added. */
+        val targetCount: Int,
     ) : PingUiState
 
     @Immutable

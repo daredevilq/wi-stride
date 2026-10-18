@@ -10,6 +10,7 @@
 
   <!-- Top bar -->
   <string name="ping_action_add">Add target</string>
+  <string name="ping_limit_reached">Target limit reached (%1$d). Remove one to add another.</string>
   <string name="ping_action_interval">Interval: %1$s</string>
   <string name="ping_interval_current">%1$s (current)</string>
   <string name="ping_action_more">More ping options</string>

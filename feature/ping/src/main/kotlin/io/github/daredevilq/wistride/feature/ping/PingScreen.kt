@@ -21,6 +21,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -69,7 +70,23 @@ internal fun PingScreen(
         modifier = modifier,
         // The enclosing app scaffold already consumed the system bar insets.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = { PingToolbar(state.intervalMs(), actions, onAdd = { showAddDialog = true }) },
+        topBar = {
+            Column {
+                PingToolbar(
+                    intervalMs = state.intervalMs(),
+                    canAdd = state.targetCount() < PingSettings.MAX_TARGETS,
+                    actions = actions,
+                    onAdd = { showAddDialog = true },
+                )
+                if (state.intervalMs() != null && state.targetCount() >= PingSettings.MAX_TARGETS) {
+                    Text(
+                        text = stringResource(R.string.ping_limit_reached, PingSettings.MAX_TARGETS),
+                        modifier = Modifier.padding(horizontal = WiStrideTheme.spacing.l),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+        },
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             when (state) {
@@ -99,10 +116,19 @@ private fun PingUiState.intervalMs(): Long? =
         is PingUiState.Content -> intervalMs
     }
 
+private fun PingUiState.targetCount(): Int =
+    when (this) {
+        PingUiState.Loading -> 0
+        is PingUiState.Empty -> 0
+        is PingUiState.NoWifi -> targetCount
+        is PingUiState.Content -> targets.size
+    }
+
 /** Screen actions in a toolbar row: the app shell's top bar already shows the title and app menu. */
 @Composable
 private fun PingToolbar(
     intervalMs: Long?,
+    canAdd: Boolean,
     actions: PingActions,
     onAdd: () -> Unit,
 ) {
@@ -112,7 +138,7 @@ private fun PingToolbar(
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        TextButton(onClick = onAdd, modifier = Modifier.defaultMinSize(minHeight = MinTouchTarget)) {
+        TextButton(onClick = onAdd, enabled = canAdd, modifier = Modifier.defaultMinSize(minHeight = MinTouchTarget)) {
             Text(stringResource(R.string.ping_action_add))
         }
         IntervalMenu(intervalMs, actions.onSetInterval)
