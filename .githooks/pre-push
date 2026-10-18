@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Git pre-push safety net.
+# Enable once per clone:  git config core.hooksPath .githooks
+set -e
+
+if [ ! -f ./gradlew ]; then
+  echo "pre-push: no Gradle wrapper yet, skipping checks."
+  exit 0
+fi
+
+echo "pre-push: running fast local checks..."
+./gradlew --console=plain -q spotlessCheck detekt testDebugUnitTest
+echo "pre-push: OK"

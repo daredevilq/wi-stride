@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+  <!-- Every user-visible string exists in EN and PL. -->
+  <issue id="MissingTranslation" severity="error" />
+  <issue id="HardcodedText" severity="error" />
+  <!-- Dependency upgrades are a deliberate decision, not a lint failure. -->
+  <issue id="GradleDependency" severity="ignore" />
+  <issue id="NewerVersionAvailable" severity="ignore" />
+  <issue id="AndroidGradlePluginVersion" severity="ignore" />
+</lint>

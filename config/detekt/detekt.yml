@@ -1,0 +1,12 @@
+# Overrides on top of the detekt default config (buildUponDefaultConfig = true).
+naming:
+  FunctionNaming:
+    ignoreAnnotated:
+      - Composable
+
+style:
+  MagicNumber:
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreAnnotated:
+      - Preview
