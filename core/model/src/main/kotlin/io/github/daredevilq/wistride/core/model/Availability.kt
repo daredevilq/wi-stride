@@ -29,6 +29,9 @@ sealed interface UnavailableReason {
     /** The value is redacted while location services are switched off. */
     data object NeedsLocationOn : UnavailableReason
 
+    /** The value comes from a later measurement (e.g. the next Wi-Fi scan) that has not arrived yet. */
+    data object AwaitingData : UnavailableReason
+
     /** The API exists, but this device/driver/network reports an unknown value. */
     data object NotReportedByDevice : UnavailableReason
 }

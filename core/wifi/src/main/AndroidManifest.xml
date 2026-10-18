@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  <!-- WifiManager.startScan() -->
+  <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+  <!-- SSID/BSSID of the connected network (all API levels) and scan results up to API 32. -->
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+  <!-- Since API 31 FINE must be requested together with COARSE. -->
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+  <!-- Scan results on API 33+; WiStride never derives the user's location from scans. -->
+  <uses-permission
+    android:name="android.permission.NEARBY_WIFI_DEVICES"
+    android:usesPermissionFlags="neverForLocation" />
+</manifest>
