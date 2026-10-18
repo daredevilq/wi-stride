@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="trace_title">Rejestrator przebiegów z sensorów</string>
+  <string name="trace_name_label">Nazwa przebiegu</string>
+  <string name="trace_start">Start</string>
+  <string name="trace_stop">Stop</string>
+  <string name="trace_samples">Próbki</string>
+  <string name="trace_steps">Kroki</string>
+  <string name="trace_duration">Czas</string>
+  <string name="trace_duration_value">%1$d,%2$d s</string>
+  <string name="trace_sensors_header">Sensory</string>
+  <string name="trace_sensor_accelerometer">Akcelerometr</string>
+  <string name="trace_sensor_game_rv">Game rotation vector</string>
+  <string name="trace_sensor_rv">Rotation vector</string>
+  <string name="trace_sensor_step">Detektor kroków</string>
+  <string name="trace_sensor_not_available">Niedostępny na tym urządzeniu</string>
+  <string name="trace_sensor_details">%1$s (%2$s)</string>
+  <string name="trace_sensor_details_rate">%1$s (%2$s), maks. %3$d Hz</string>
+  <string name="trace_step_needs_permission">Wymaga uprawnienia Aktywność fizyczna</string>
+  <string name="trace_grant_permission">Przyznaj uprawnienie</string>
+  <string name="trace_no_accelerometer">To urządzenie nie ma akcelerometru, nagrywanie jest niemożliwe.</string>
+  <string name="trace_saved">Zapisano: %1$s</string>
+  <string name="trace_save_failed">Nie udało się zapisać pliku przebiegu.</string>
+</resources>

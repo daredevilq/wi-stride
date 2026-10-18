@@ -5,5 +5,17 @@
     <activity
       android:name=".HiltTestActivity"
       android:exported="false" />
+    <!-- Debug-only sensor trace recorder; second launcher entry so it can be started while walking. -->
+    <activity
+      android:name=".trace.TraceRecorderActivity"
+      android:exported="true"
+      android:label="@string/trace_launcher_label"
+      android:screenOrientation="portrait"
+      android:taskAffinity=".trace">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
   </application>
 </manifest>

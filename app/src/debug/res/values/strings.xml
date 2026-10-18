@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="trace_launcher_label" translatable="false">WiStride Trace</string>
+  <string name="trace_title">Sensor trace recorder</string>
+  <string name="trace_name_label">Trace name</string>
+  <string name="trace_start">Start</string>
+  <string name="trace_stop">Stop</string>
+  <string name="trace_samples">Samples</string>
+  <string name="trace_steps">Steps</string>
+  <string name="trace_duration">Duration</string>
+  <string name="trace_duration_value">%1$d.%2$d s</string>
+  <string name="trace_sensors_header">Sensors</string>
+  <string name="trace_sensor_accelerometer">Accelerometer</string>
+  <string name="trace_sensor_game_rv">Game rotation vector</string>
+  <string name="trace_sensor_rv">Rotation vector</string>
+  <string name="trace_sensor_step">Step detector</string>
+  <string name="trace_sensor_not_available">Not available on this device</string>
+  <string name="trace_sensor_details">%1$s (%2$s)</string>
+  <string name="trace_sensor_details_rate">%1$s (%2$s), max %3$d Hz</string>
+  <string name="trace_step_needs_permission">Needs the Physical activity permission</string>
+  <string name="trace_grant_permission">Grant permission</string>
+  <string name="trace_no_accelerometer">This device has no accelerometer, recording is impossible.</string>
+  <string name="trace_saved">Saved: %1$s</string>
+  <string name="trace_save_failed">Could not write the trace file.</string>
+</resources>

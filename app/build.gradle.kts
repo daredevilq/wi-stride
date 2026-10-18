@@ -15,6 +15,7 @@ android {
 dependencies {
     implementation(projects.core.common)
     implementation(projects.core.designsystem)
+    implementation(projects.core.sensors)
     implementation(projects.core.ui)
     implementation(projects.feature.map)
     implementation(projects.feature.networks)
@@ -27,6 +28,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.material3.navigation.suite)
     implementation(libs.kotlinx.coroutines.android)
+    // Used by the debug-only trace recorder (app/src/debug).
+    debugImplementation(libs.androidx.lifecycle.runtime.compose)
 
     testImplementation(libs.androidx.test.ext.junit)
     testImplementation(libs.hilt.android.testing)
