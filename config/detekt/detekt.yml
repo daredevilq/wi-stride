@@ -8,5 +8,7 @@ style:
   MagicNumber:
     ignorePropertyDeclaration: true
     ignoreCompanionObjectPropertyDeclaration: true
+    # Enum constructor arguments (e.g. channel width in MHz) are the named constant already.
+    ignoreEnums: true
     ignoreAnnotated:
       - Preview
