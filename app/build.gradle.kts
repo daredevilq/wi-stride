@@ -15,6 +15,7 @@ android {
 dependencies {
     implementation(projects.core.common)
     implementation(projects.core.designsystem)
+    implementation(projects.core.ui)
     implementation(projects.feature.map)
     implementation(projects.feature.networks)
     implementation(projects.feature.now)

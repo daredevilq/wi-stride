@@ -1,4 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="feature_now_title">Now</string>
+  <string name="now_loading">Reading Wi-Fi status…</string>
+
+  <!-- Permission -->
+  <string name="now_permission_title">Allow access to Wi-Fi details</string>
+  <string name="now_permission_rationale">Android only reveals the network name (SSID), its BSSID and the channel to apps that may use location and nearby devices. WiStride reads these values just to show them here.</string>
+
+  <!-- State cards -->
+  <string name="now_wifi_off_title">Wi-Fi is off</string>
+  <string name="now_wifi_off_message">Turn Wi-Fi on to see the connection details.</string>
+  <string name="now_wifi_off_action">Open Wi-Fi settings</string>
+  <string name="now_airplane_title">Airplane mode is on</string>
+  <string name="now_airplane_message">Airplane mode switched Wi-Fi off. Turn airplane mode off, or leave it on and switch Wi-Fi back on in the quick settings.</string>
+  <string name="now_airplane_action">Airplane mode settings</string>
+  <string name="now_disconnected_title">Not connected to Wi-Fi</string>
+  <string name="now_disconnected_message">Connect to a network to see its signal and settings.</string>
+  <string name="now_disconnected_action">Choose a network</string>
+  <string name="now_location_off_title">Location services are off</string>
+  <string name="now_location_off_message">While location is off, Android hides the network name and some other values.</string>
+  <string name="now_location_off_action">Location settings</string>
+
+  <!-- Header -->
+  <string name="now_ssid">Network (SSID)</string>
+  <string name="now_bssid">BSSID</string>
+  <string name="now_rssi">Signal strength</string>
+  <string name="now_signal_quality">Signal quality</string>
+  <string name="now_quality_value">%1$d%% · %2$s</string>
+  <string name="now_quality_unavailable">Unavailable</string>
+  <string name="now_level_excellent">Excellent</string>
+  <string name="now_level_good">Good</string>
+  <string name="now_level_fair">Fair</string>
+  <string name="now_level_weak">Weak</string>
+  <string name="now_level_poor">Poor</string>
+
+  <!-- Chart -->
+  <string name="now_chart_title">Signal over the last 60 seconds</string>
+  <string name="now_chart_empty">No signal readings yet.</string>
+  <string name="now_chart_summary">Now: %1$s · Min: %2$s · Max: %3$s</string>
+  <string name="now_chart_no_reading">no reading</string>
+
+  <!-- Sections -->
+  <string name="now_section_radio">Radio</string>
+  <string name="now_section_ip">IP</string>
+  <string name="now_frequency">Frequency</string>
+  <string name="now_band">Band</string>
+  <string name="now_channel">Channel</string>
+  <string name="now_channel_width">Channel width</string>
+  <string name="now_generation">Wi-Fi generation</string>
+  <string name="now_tx_speed">Link speed (TX)</string>
+  <string name="now_rx_speed">Link speed (RX)</string>
+  <string name="now_max_tx_speed">Max link speed (TX)</string>
+  <string name="now_max_rx_speed">Max link speed (RX)</string>
+  <string name="now_security">Security</string>
+  <string name="now_ipv4">IPv4 address</string>
+  <string name="now_ipv6">IPv6 addresses</string>
+  <string name="now_gateway">Gateway</string>
+  <string name="now_dns">DNS servers</string>
+  <string name="now_mtu">MTU</string>
+
+  <!-- Value formats -->
+  <string name="now_value_dbm" translatable="false">%1$d dBm</string>
+  <string name="now_value_mhz" translatable="false">%1$d MHz</string>
+  <string name="now_value_mbps" translatable="false">%1$d Mb/s</string>
+  <string name="now_value_width_80_80" translatable="false">80+80 MHz</string>
+  <string name="now_value_ip_prefix" translatable="false">%1$s/%2$d</string>
+  <string name="now_value_generation" translatable="false">%1$s (%2$s)</string>
+  <string name="now_value_none">None</string>
+  <string name="now_band_2_4" translatable="false">2.4 GHz</string>
+  <string name="now_band_5" translatable="false">5 GHz</string>
+  <string name="now_band_6" translatable="false">6 GHz</string>
+
+  <!-- Generations and IEEE amendments -->
+  <string name="now_generation_legacy">Legacy</string>
+  <string name="now_generation_wifi4" translatable="false">Wi-Fi 4</string>
+  <string name="now_generation_wifi5" translatable="false">Wi-Fi 5</string>
+  <string name="now_generation_wifi6" translatable="false">Wi-Fi 6</string>
+  <string name="now_generation_wifi6e" translatable="false">Wi-Fi 6E</string>
+  <string name="now_generation_wifi7" translatable="false">Wi-Fi 7</string>
+  <string name="now_generation_wigig" translatable="false">WiGig</string>
+  <string name="now_standard_legacy" translatable="false">802.11a/b/g</string>
+  <string name="now_standard_n" translatable="false">802.11n</string>
+  <string name="now_standard_ac" translatable="false">802.11ac</string>
+  <string name="now_standard_ax" translatable="false">802.11ax</string>
+  <string name="now_standard_ad" translatable="false">802.11ad</string>
+  <string name="now_standard_be" translatable="false">802.11be</string>
+
+  <!-- Security -->
+  <string name="now_security_open">Open</string>
+  <string name="now_security_wep" translatable="false">WEP</string>
+  <string name="now_security_psk" translatable="false">WPA/WPA2-Personal</string>
+  <string name="now_security_eap" translatable="false">WPA/WPA2-Enterprise</string>
+  <string name="now_security_sae" translatable="false">WPA3-Personal</string>
+  <string name="now_security_wpa3_enterprise" translatable="false">WPA3-Enterprise</string>
+  <string name="now_security_wpa3_enterprise_192" translatable="false">WPA3-Enterprise 192-bit</string>
+  <string name="now_security_owe">Enhanced Open (OWE)</string>
+  <string name="now_security_wapi_psk" translatable="false">WAPI-PSK</string>
+  <string name="now_security_wapi_cert" translatable="false">WAPI-CERT</string>
+  <string name="now_security_osen" translatable="false">OSEN</string>
+  <string name="now_security_passpoint" translatable="false">Passpoint</string>
+  <string name="now_security_dpp" translatable="false">DPP</string>
+
+  <!-- Why a value is unavailable -->
+  <string name="now_reason_requires_api">Requires Android %1$s</string>
+  <string name="now_reason_needs_permission">Needs the location and nearby devices permission</string>
+  <string name="now_reason_needs_location">Turn on location services</string>
+  <string name="now_reason_awaiting_data">Waiting for a Wi-Fi scan</string>
+  <string name="now_reason_not_reported">Not reported by this device or network</string>
+
+  <!-- Copy -->
+  <string name="now_copy_value">Copy value</string>
+  <string name="now_copied">Copied</string>
 </resources>

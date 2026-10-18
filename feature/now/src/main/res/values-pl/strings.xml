@@ -1,4 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="feature_now_title">Teraz</string>
+  <string name="now_loading">Odczytuję stan Wi-Fi…</string>
+
+  <!-- Permission -->
+  <string name="now_permission_title">Zezwól na dostęp do szczegółów Wi-Fi</string>
+  <string name="now_permission_rationale">Android ujawnia nazwę sieci (SSID), jej BSSID i kanał tylko aplikacjom, które mogą korzystać z lokalizacji i urządzeń w pobliżu. WiStride odczytuje te dane wyłącznie po to, aby je tu pokazać.</string>
+
+  <!-- State cards -->
+  <string name="now_wifi_off_title">Wi-Fi jest wyłączone</string>
+  <string name="now_wifi_off_message">Włącz Wi-Fi, aby zobaczyć szczegóły połączenia.</string>
+  <string name="now_wifi_off_action">Otwórz ustawienia Wi-Fi</string>
+  <string name="now_airplane_title">Tryb samolotowy jest włączony</string>
+  <string name="now_airplane_message">Tryb samolotowy wyłączył Wi-Fi. Wyłącz tryb samolotowy albo zostaw go włączony i ponownie włącz Wi-Fi w szybkich ustawieniach.</string>
+  <string name="now_airplane_action">Ustawienia trybu samolotowego</string>
+  <string name="now_disconnected_title">Brak połączenia z Wi-Fi</string>
+  <string name="now_disconnected_message">Połącz się z siecią, aby zobaczyć jej sygnał i ustawienia.</string>
+  <string name="now_disconnected_action">Wybierz sieć</string>
+  <string name="now_location_off_title">Usługi lokalizacji są wyłączone</string>
+  <string name="now_location_off_message">Gdy lokalizacja jest wyłączona, Android ukrywa nazwę sieci i część innych wartości.</string>
+  <string name="now_location_off_action">Ustawienia lokalizacji</string>
+
+  <!-- Header -->
+  <string name="now_ssid">Sieć (SSID)</string>
+  <string name="now_bssid">BSSID</string>
+  <string name="now_rssi">Siła sygnału</string>
+  <string name="now_signal_quality">Jakość sygnału</string>
+  <string name="now_quality_value">%1$d%% · %2$s</string>
+  <string name="now_quality_unavailable">Niedostępna</string>
+  <string name="now_level_excellent">Doskonały</string>
+  <string name="now_level_good">Dobry</string>
+  <string name="now_level_fair">Średni</string>
+  <string name="now_level_weak">Słaby</string>
+  <string name="now_level_poor">Bardzo słaby</string>
+
+  <!-- Chart -->
+  <string name="now_chart_title">Sygnał w ciągu ostatnich 60 sekund</string>
+  <string name="now_chart_empty">Brak odczytów sygnału.</string>
+  <string name="now_chart_summary">Teraz: %1$s · Min: %2$s · Maks: %3$s</string>
+  <string name="now_chart_no_reading">brak odczytu</string>
+
+  <!-- Sections -->
+  <string name="now_section_radio">Radio</string>
+  <string name="now_section_ip">IP</string>
+  <string name="now_frequency">Częstotliwość</string>
+  <string name="now_band">Pasmo</string>
+  <string name="now_channel">Kanał</string>
+  <string name="now_channel_width">Szerokość kanału</string>
+  <string name="now_generation">Generacja Wi-Fi</string>
+  <string name="now_tx_speed">Prędkość łącza (TX)</string>
+  <string name="now_rx_speed">Prędkość łącza (RX)</string>
+  <string name="now_max_tx_speed">Maks. prędkość łącza (TX)</string>
+  <string name="now_max_rx_speed">Maks. prędkość łącza (RX)</string>
+  <string name="now_security">Zabezpieczenia</string>
+  <string name="now_ipv4">Adres IPv4</string>
+  <string name="now_ipv6">Adresy IPv6</string>
+  <string name="now_gateway">Brama</string>
+  <string name="now_dns">Serwery DNS</string>
+  <string name="now_mtu">MTU</string>
+
+  <!-- Value formats -->
+  <string name="now_value_none">Brak</string>
+
+  <!-- Generations and IEEE amendments -->
+  <string name="now_generation_legacy">Starszy standard</string>
+
+  <!-- Security -->
+  <string name="now_security_open">Otwarta</string>
+  <string name="now_security_owe">Enhanced Open (OWE)</string>
+
+  <!-- Why a value is unavailable -->
+  <string name="now_reason_requires_api">Wymaga Androida %1$s</string>
+  <string name="now_reason_needs_permission">Wymaga uprawnienia do lokalizacji i urządzeń w pobliżu</string>
+  <string name="now_reason_needs_location">Włącz usługi lokalizacji</string>
+  <string name="now_reason_awaiting_data">Czekam na skanowanie Wi-Fi</string>
+  <string name="now_reason_not_reported">Nieraportowane przez to urządzenie lub sieć</string>
+
+  <!-- Copy -->
+  <string name="now_copy_value">Kopiuj wartość</string>
+  <string name="now_copied">Skopiowano</string>
 </resources>
