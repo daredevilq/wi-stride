@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import java.io.IOException
 import javax.inject.Inject
 
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
@@ -91,21 +92,36 @@ class PingViewModel
             host: String,
             port: Int?,
         ) {
-            viewModelScope.launch { settingsRepository.addTarget(host, port) }
+            write { addTarget(host, port) }
         }
 
         fun removeTarget(id: String) {
             // Otherwise restoring a default target with the same id would reopen a stale detail view.
             if (savedState.get<String?>(KEY_SELECTED_ID) == id) selectTarget(null)
-            viewModelScope.launch { settingsRepository.removeTarget(id) }
+            write { removeTarget(id) }
         }
 
         fun setInterval(intervalMs: Long) {
-            viewModelScope.launch { settingsRepository.setInterval(intervalMs) }
+            write { setInterval(intervalMs) }
         }
 
         fun restoreDefaultTargets() {
-            viewModelScope.launch { settingsRepository.restoreDefaultTargets() }
+            write { restoreDefaultTargets() }
+        }
+
+        /**
+         * Runs a settings write without letting a failure crash the app through [viewModelScope]: a disk
+         * error leaves the stored settings unchanged (the screen keeps showing them), and the target cap
+         * is also enforced by the UI, so a rejected add can only come from a stale dialog.
+         */
+        private fun write(block: suspend PingSettingsRepository.() -> Unit) {
+            viewModelScope.launch {
+                try {
+                    settingsRepository.block()
+                } catch (_: IOException) {
+                } catch (_: IllegalArgumentException) {
+                }
+            }
         }
 
         private fun measure(snapshot: PermissionSnapshot): Flow<PingUiState> =

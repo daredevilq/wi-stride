@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -59,7 +60,21 @@ class SharedWifiPathSourceTest {
 
             jobs.forEach { it.cancel() }
             runCurrent()
+            // Still registered during the restart grace period…
+            assertThat(active.get()).isEqualTo(1)
+            advanceTimeBy(GRACE_MS)
+            runCurrent()
             assertThat(active.get()).isEqualTo(0)
+        }
+
+    @Test
+    fun `a collector returning within the grace period reuses the subscription`() =
+        runTest {
+            val shared = SharedWifiPathSource(upstream, backgroundScope)
+            assertThat(shared.path.first()).isEqualTo(path)
+            advanceTimeBy(GRACE_MS / 2)
+            assertThat(shared.path.first()).isEqualTo(path)
+            assertThat(subscriptions.get()).isEqualTo(1)
         }
 
     @Test
@@ -67,6 +82,7 @@ class SharedWifiPathSourceTest {
         runTest {
             val shared = SharedWifiPathSource(upstream, backgroundScope)
             assertThat(shared.path.first()).isEqualTo(path)
+            advanceTimeBy(GRACE_MS)
             runCurrent()
             assertThat(shared.path.replayCache).isEmpty()
             assertThat(active.get()).isEqualTo(0)
@@ -74,5 +90,8 @@ class SharedWifiPathSourceTest {
 
     private companion object {
         const val MONITORS = 8
+
+        /** One millisecond past the source's restart grace period. */
+        const val GRACE_MS = 1_001L
     }
 }
