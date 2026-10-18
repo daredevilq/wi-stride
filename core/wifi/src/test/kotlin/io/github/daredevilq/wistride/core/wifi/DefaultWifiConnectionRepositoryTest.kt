@@ -25,10 +25,13 @@ private class Subscribable<T>(
 ) {
     val state = MutableStateFlow(initial)
     val subscribers = AtomicInteger()
+    val starts = AtomicInteger()
     val flow: Flow<T> =
         state
-            .onStart { subscribers.incrementAndGet() }
-            .onCompletion { subscribers.decrementAndGet() }
+            .onStart {
+                subscribers.incrementAndGet()
+                starts.incrementAndGet()
+            }.onCompletion { subscribers.decrementAndGet() }
 }
 
 private class FakeSources {
@@ -116,6 +119,21 @@ class DefaultWifiConnectionRepositoryTest {
                 assertThat(awaitItem().state).isEqualTo(ConnectionState.AirplaneMode)
                 fakes.network.state.value = network()
                 assertThat(awaitItem().state).isInstanceOf(ConnectionState.Connected::class.java)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun locationChangeReRegistersTheNetworkCallback() =
+        runTest {
+            val fakes = FakeSources()
+            fakes.network.state.value = network()
+            repo(fakes).snapshots.test {
+                assertThat(awaitItem().environment.locationEnabled).isTrue()
+                fakes.location.state.value = false
+                assertThat(awaitItem().environment.locationEnabled).isFalse()
+                assertThat(fakes.network.starts.get()).isEqualTo(2)
+                assertThat(fakes.network.subscribers.get()).isEqualTo(1)
                 cancelAndIgnoreRemainingEvents()
             }
         }
