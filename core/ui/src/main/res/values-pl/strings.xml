@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="permission_action_allow">Zezwól</string>
+    <string name="permission_action_open_settings">Otwórz ustawienia</string>
+    <string name="permission_blocked_explanation">To uprawnienie zostało zablokowane. Możesz je włączyć w ustawieniach systemowych aplikacji.</string>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="permission_action_allow">Allow</string>
+    <string name="permission_action_open_settings">Open settings</string>
+    <string name="permission_blocked_explanation">This permission was blocked. You can turn it on in the app\'s system settings.</string>
+</resources>
