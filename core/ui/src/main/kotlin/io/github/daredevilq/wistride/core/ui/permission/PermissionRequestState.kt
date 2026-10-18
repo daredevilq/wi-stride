@@ -1,6 +1,7 @@
 package io.github.daredevilq.wistride.core.ui.permission
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
@@ -11,6 +12,7 @@ import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,7 +36,7 @@ interface PermissionRequestState {
     /** Current status; updated after the system dialog and when returning from settings. */
     val status: PermissionStatus
 
-    /** Records the request in the history, then shows the system permission dialog. */
+    /** Shows the system permission dialog. */
     fun launchRequest()
 
     /** Opens the app's system settings page, the only way out of [PermissionStatus.PermanentlyDenied]. */
@@ -56,14 +58,31 @@ fun rememberPermissionRequestState(
         remember(requirement, history, context) {
             DefaultPermissionRequestState(requirement, history, context, scope)
         }
-    state.launcher =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-            scope.launch { state.refresh() }
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+            scope.launch {
+                recordPermissionResult(history, requirement.id, result)
+                state.refresh()
+            }
         }
+    SideEffect { state.launcher = launcher }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         scope.launch { state.refresh() }
     }
     return state
+}
+
+/**
+ * Records a request only when the system dialog produced a decision. On API 30+ dismissing the
+ * dialog (back / tap outside) returns an empty result and is not a denial; recording it would make
+ * the next evaluation report "don't ask again" although the dialog can still be shown.
+ */
+internal suspend fun recordPermissionResult(
+    history: PermissionRequestHistory,
+    requirementId: String,
+    result: Map<String, Boolean>,
+) {
+    if (result.isNotEmpty()) history.markRequested(requirementId)
 }
 
 private class DefaultPermissionRequestState(
@@ -74,40 +93,42 @@ private class DefaultPermissionRequestState(
 ) : PermissionRequestState {
     var launcher: ManagedActivityResultLauncher<Array<String>, Map<String, Boolean>>? = null
 
-    override var status by mutableStateOf(PermissionStatus.NotRequested)
+    // Synchronous first guess so an already granted permission never flashes the rationale card;
+    // the request history (suspending) refines NotRequested vs PermanentlyDenied in refresh().
+    override var status by mutableStateOf(
+        resolvePermissionStatus(isGranted(), shouldShowRationale(), wasRequestedBefore = false),
+    )
         private set
 
     override fun launchRequest() {
-        scope.launch {
-            history.markRequested(requirement.id)
-            launcher?.launch(requirement.permissions.toTypedArray())
-        }
+        launcher?.launch(requirement.permissions.toTypedArray())
     }
 
     override fun openAppSettings() {
-        val intent =
+        val details =
             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:${context.packageName}".toUri())
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        context.startActivity(intent)
+        try {
+            context.startActivity(details)
+        } catch (_: ActivityNotFoundException) {
+            // Some OEM builds have no per-app details screen; the general settings are the best fallback.
+            context.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }
     }
 
     suspend fun refresh() {
-        status =
-            if (!requirement.isApplicable(Build.VERSION.SDK_INT)) {
-                PermissionStatus.Granted
-            } else {
-                val granted =
-                    requirement.permissions.all {
-                        ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-                    }
-                val activity = context.findActivity()
-                val rationale =
-                    activity != null &&
-                        requirement.permissions.any {
-                            ActivityCompat.shouldShowRequestPermissionRationale(activity, it)
-                        }
-                resolvePermissionStatus(granted, rationale, history.wasRequested(requirement.id))
+        status = resolvePermissionStatus(isGranted(), shouldShowRationale(), history.wasRequested(requirement.id))
+    }
+
+    private fun isGranted(): Boolean =
+        !requirement.isApplicable(Build.VERSION.SDK_INT) ||
+            requirement.permissions.all {
+                ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
             }
+
+    private fun shouldShowRationale(): Boolean {
+        val activity = context.findActivity() ?: return false
+        return requirement.permissions.any { ActivityCompat.shouldShowRequestPermissionRationale(activity, it) }
     }
 }
 

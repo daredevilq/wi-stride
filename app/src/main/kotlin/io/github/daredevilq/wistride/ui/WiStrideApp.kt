@@ -1,5 +1,6 @@
 package io.github.daredevilq.wistride.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -21,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -44,10 +46,8 @@ fun WiStrideApp(
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val destination = backStackEntry?.destination
-    val current =
-        TopLevelDestination.entries.firstOrNull { tab ->
-            destination?.hierarchy?.any { it.hasRoute(tab.routeClass) } == true
-        }
+    val current = destination.toTopLevelDestination()
+    val titleRes = titleFor(current, destination)
     val suiteType =
         if (current == null) {
             NavigationSuiteType.None
@@ -72,8 +72,8 @@ fun WiStrideApp(
         Scaffold(
             topBar = {
                 WiStrideTopBar(
-                    current = current,
-                    isSettings = destination?.hasRoute(SettingsRoute::class) == true,
+                    titleRes = titleRes,
+                    isTopLevel = current != null,
                     onBack = navController::navigateUp,
                     onSettings = { navController.navigate(SettingsRoute) },
                     onAbout = { navController.navigate(AboutRoute) },
@@ -96,6 +96,29 @@ fun WiStrideApp(
     }
 }
 
+/**
+ * Tab owning [this] destination. The back stack is empty on the first frame (launch, recreation);
+ * the start tab is returned then so the shell never flashes a back arrow without the navigation bar.
+ */
+private fun NavDestination?.toTopLevelDestination(): TopLevelDestination? =
+    if (this == null) {
+        TopLevelDestination.NOW
+    } else {
+        TopLevelDestination.entries.firstOrNull { tab -> hierarchy.any { it.hasRoute(tab.route::class) } }
+    }
+
+@StringRes
+private fun titleFor(
+    current: TopLevelDestination?,
+    destination: NavDestination?,
+): Int =
+    when {
+        current != null -> current.label
+        destination?.hasRoute(SettingsRoute::class) == true -> R.string.menu_settings
+        destination?.hasRoute(AboutRoute::class) == true -> R.string.menu_about
+        else -> R.string.app_name
+    }
+
 private fun NavHostController.navigateToTab(tab: TopLevelDestination) {
     navigate(tab.route) {
         popUpTo(graph.findStartDestination().id) { saveState = true }
@@ -107,22 +130,16 @@ private fun NavHostController.navigateToTab(tab: TopLevelDestination) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun WiStrideTopBar(
-    current: TopLevelDestination?,
-    isSettings: Boolean,
+    @StringRes titleRes: Int,
+    isTopLevel: Boolean,
     onBack: () -> Unit,
     onSettings: () -> Unit,
     onAbout: () -> Unit,
 ) {
-    val titleRes =
-        when {
-            current != null -> current.label
-            isSettings -> R.string.menu_settings
-            else -> R.string.menu_about
-        }
     TopAppBar(
         title = { Text(stringResource(titleRes)) },
         navigationIcon = {
-            if (current == null) {
+            if (!isTopLevel) {
                 IconButton(onClick = onBack) {
                     Icon(
                         painterResource(R.drawable.ic_arrow_back),
@@ -132,7 +149,7 @@ private fun WiStrideTopBar(
             }
         },
         actions = {
-            if (current != null) OverflowMenu(onSettings = onSettings, onAbout = onAbout)
+            if (isTopLevel) OverflowMenu(onSettings = onSettings, onAbout = onAbout)
         },
     )
 }

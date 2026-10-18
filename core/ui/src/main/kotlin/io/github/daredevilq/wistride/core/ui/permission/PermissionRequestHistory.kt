@@ -8,7 +8,7 @@ interface PermissionRequestHistory {
     /** True if [markRequested] was called for [id] before. */
     suspend fun wasRequested(id: String): Boolean
 
-    /** Records that the system dialog is being shown for [id]. */
+    /** Records that the system dialog returned a decision for [id]. */
     suspend fun markRequested(id: String)
 }
 

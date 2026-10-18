@@ -1,4 +1,6 @@
 import com.android.build.api.dsl.CommonExtension
+import com.android.build.api.variant.AndroidComponentsExtension
+import com.android.build.api.variant.HasHostTests
 import io.github.daredevilq.wistride.buildlogic.lib
 import io.github.daredevilq.wistride.buildlogic.libs
 import io.github.daredevilq.wistride.buildlogic.pluginId
@@ -12,6 +14,13 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
         with(target) {
             pluginManager.apply(libs.pluginId("kotlin-compose"))
             extensions.getByType(CommonExtension::class.java).buildFeatures.compose = true
+            // One shared robolectric.properties (SDK pin) for all Compose modules' host tests.
+            val robolectricConfig = rootProject.file("config/robolectric").absolutePath
+            extensions.getByType(AndroidComponentsExtension::class.java).onVariants { variant ->
+                (variant as? HasHostTests)?.hostTests?.values?.forEach { test ->
+                    test.sources.resources?.addStaticSourceDirectory(robolectricConfig)
+                }
+            }
             dependencies {
                 val bom = platform(libs.lib("androidx-compose-bom"))
                 add("implementation", bom)

@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.github.daredevilq.wistride.core.designsystem.theme.WiStrideTheme
 import io.github.daredevilq.wistride.core.model.permission.PermissionStatus
 import io.github.daredevilq.wistride.core.ui.R
 
@@ -35,8 +36,8 @@ fun PermissionRationaleCard(
     val blocked = status == PermissionStatus.PermanentlyDenied
     Card(modifier = modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(WiStrideTheme.spacing.l),
+            verticalArrangement = Arrangement.spacedBy(WiStrideTheme.spacing.s),
         ) {
             Text(text = title, style = MaterialTheme.typography.titleMedium)
             Text(text = rationale, style = MaterialTheme.typography.bodyMedium)
