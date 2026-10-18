@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="nav_now">Teraz</string>
+  <string name="nav_ping">Ping</string>
+  <string name="nav_networks">Sieci</string>
+  <string name="nav_speed">Prędkość</string>
+  <string name="nav_map">Mapa</string>
+  <string name="menu_settings">Ustawienia</string>
+  <string name="menu_about">O aplikacji</string>
+  <string name="action_more_options">Więcej opcji</string>
+  <string name="action_navigate_up">Wstecz</string>
+</resources>
