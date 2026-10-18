@@ -14,6 +14,7 @@ android {
 
 dependencies {
     implementation(projects.core.common)
+    implementation(projects.core.datastore)
     implementation(projects.core.designsystem)
     implementation(projects.core.sensors)
     implementation(projects.core.ui)
