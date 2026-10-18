@@ -3,9 +3,9 @@ package io.github.daredevilq.wistride.feature.now
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.daredevilq.wistride.core.model.permission.PermissionRequestHistory
 import io.github.daredevilq.wistride.core.model.permission.PermissionStatus
 import io.github.daredevilq.wistride.core.model.wifi.WifiSnapshot
-import io.github.daredevilq.wistride.core.ui.permission.PermissionRequestHistory
 import io.github.daredevilq.wistride.core.wifi.WifiConnectionRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope

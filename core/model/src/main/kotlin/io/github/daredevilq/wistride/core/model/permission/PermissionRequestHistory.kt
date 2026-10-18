@@ -1,4 +1,4 @@
-package io.github.daredevilq.wistride.core.ui.permission
+package io.github.daredevilq.wistride.core.model.permission
 
 /**
  * Remembers which requirements the system dialog was already shown for. Needed to tell
@@ -15,8 +15,8 @@ interface PermissionRequestHistory {
 /**
  * Non-persistent [PermissionRequestHistory] for previews and tests.
  *
- * It lives in main (not the test source set) so feature modules can reuse it in their own
- * previews and tests; the real DataStore-backed implementation arrives in M2.
+ * Lives in main (not a test source set) so every module can use it in previews and tests; the app
+ * binds the DataStore-backed implementation from `core:datastore`.
  */
 class InMemoryPermissionRequestHistory(
     initial: Set<String> = emptySet(),

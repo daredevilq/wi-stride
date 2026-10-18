@@ -5,6 +5,7 @@ import com.google.common.truth.Truth.assertThat
 import io.github.daredevilq.wistride.core.model.Availability
 import io.github.daredevilq.wistride.core.model.UnavailableReason
 import io.github.daredevilq.wistride.core.model.available
+import io.github.daredevilq.wistride.core.model.permission.InMemoryPermissionRequestHistory
 import io.github.daredevilq.wistride.core.model.permission.PermissionStatus
 import io.github.daredevilq.wistride.core.model.wifi.ConnectionState
 import io.github.daredevilq.wistride.core.model.wifi.SignalLevel
@@ -12,7 +13,6 @@ import io.github.daredevilq.wistride.core.model.wifi.SignalQuality
 import io.github.daredevilq.wistride.core.model.wifi.WifiBand
 import io.github.daredevilq.wistride.core.model.wifi.WifiGeneration
 import io.github.daredevilq.wistride.core.testing.MainDispatcherRule
-import io.github.daredevilq.wistride.core.ui.permission.InMemoryPermissionRequestHistory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch

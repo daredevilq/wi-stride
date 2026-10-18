@@ -1,6 +1,7 @@
 package io.github.daredevilq.wistride.core.ui.permission
 
 import com.google.common.truth.Truth.assertThat
+import io.github.daredevilq.wistride.core.model.permission.InMemoryPermissionRequestHistory
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 

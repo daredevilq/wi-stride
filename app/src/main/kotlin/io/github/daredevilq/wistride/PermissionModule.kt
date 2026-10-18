@@ -4,8 +4,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import io.github.daredevilq.wistride.core.ui.permission.InMemoryPermissionRequestHistory
-import io.github.daredevilq.wistride.core.ui.permission.PermissionRequestHistory
+import io.github.daredevilq.wistride.core.model.permission.InMemoryPermissionRequestHistory
+import io.github.daredevilq.wistride.core.model.permission.PermissionRequestHistory
 import javax.inject.Singleton
 
 @Module

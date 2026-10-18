@@ -25,6 +25,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import io.github.daredevilq.wistride.core.model.permission.PermissionRequestHistory
 import io.github.daredevilq.wistride.core.model.permission.PermissionStatus
 import io.github.daredevilq.wistride.core.model.permission.resolvePermissionStatus
 import kotlinx.coroutines.CoroutineScope
