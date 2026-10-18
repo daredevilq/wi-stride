@@ -18,7 +18,7 @@ private const val PERCENT_PER_DBM = 2
 /**
  * Converts [rssiDbm] to a human-readable quality.
  *
- * Percent is the common vendor mapping (Windows / legacy Android `calculateSignalLevel`):
+ * Percent is the common Windows-style 0-100 mapping:
  * `percent = clamp(2 * (rssi + 100), 0, 100)`, so -50 dBm and above is 100 % and -100 dBm and
  * below is 0 %. Level thresholds: >= -50 Excellent, >= -60 Good, >= -70 Fair, >= -80 Weak,
  * otherwise Poor (a widely used rule of thumb for 2.4/5 GHz links).

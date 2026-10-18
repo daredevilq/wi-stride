@@ -25,7 +25,7 @@ import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import io.github.daredevilq.wistride.core.designsystem.theme.WiStrideTheme
 
 internal const val CHART_MIN_DBM = -100.0
-internal const val CHART_MAX_DBM = -20.0
+internal const val CHART_MAX_DBM = 0.0
 private const val CHART_MIN_X = 0.0
 private val ChartHeight = 160.dp
 
@@ -50,7 +50,7 @@ internal fun List<Int?>.chartPoints(windowSize: Int = RSSI_HISTORY_SIZE): Pair<L
     return indices.map { it + offset } to indices.map { checkNotNull(this[it]) }
 }
 
-/** Live 60 s RSSI line chart (fixed -100..-20 dBm axis) with a text summary underneath. */
+/** Live 60 s RSSI line chart (fixed -100..0 dBm axis) with a text summary underneath. */
 @Composable
 internal fun RssiChartCard(
     history: List<Int?>,

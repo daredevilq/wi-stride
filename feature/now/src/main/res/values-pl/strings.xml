@@ -44,6 +44,7 @@
   <string name="now_section_ip">IP</string>
   <string name="now_frequency">Częstotliwość</string>
   <string name="now_band">Pasmo</string>
+  <string name="now_band_2_4">2,4 GHz</string>
   <string name="now_channel">Kanał</string>
   <string name="now_channel_width">Szerokość kanału</string>
   <string name="now_generation">Generacja Wi-Fi</string>

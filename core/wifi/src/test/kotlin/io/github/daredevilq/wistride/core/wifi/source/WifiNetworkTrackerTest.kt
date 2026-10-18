@@ -51,4 +51,13 @@ class WifiNetworkTrackerTest {
         tracker.onAvailable("b")
         assertThat(tracker.current()?.wifiInfo).isNull()
     }
+
+    @Test
+    fun polledInfoArrivingAfterLossIsIgnored() {
+        tracker.onAvailable("a")
+        tracker.onLost("a")
+        tracker.setPolledInfo(rawWifiInfo(rssi = -50))
+        tracker.onAvailable("b")
+        assertThat(tracker.current()?.wifiInfo).isNull()
+    }
 }

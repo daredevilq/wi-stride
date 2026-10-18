@@ -20,6 +20,7 @@ internal class WifiNetworkTracker<K : Any> {
 
     @Synchronized
     fun onAvailable(key: K) {
+        if (entries.isEmpty()) polledInfo = null
         entries[key] = Entry(order = counter++)
     }
 
@@ -47,6 +48,8 @@ internal class WifiNetworkTracker<K : Any> {
 
     @Synchronized
     fun setPolledInfo(info: RawWifiInfo?) {
+        // A poll in flight when onLost fired must not resurrect stale info.
+        if (entries.isEmpty()) return
         polledInfo = info
     }
 

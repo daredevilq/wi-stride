@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -57,7 +58,7 @@ internal class AndroidConnectivitySource
                     pollLegacyInfo(tracker, wifiPresent, publish)
                 }
                 awaitClose { if (registered) connectivityManager.unregisterNetworkCallback(callback) }
-            }.distinctUntilChanged()
+            }.conflate().distinctUntilChanged()
 
         private fun register(callback: ConnectivityManager.NetworkCallback): Boolean {
             // Removing INTERNET keeps Wi-Fi without internet access (captive portal, offline AP) visible.
@@ -140,9 +141,10 @@ private class LocationAwareCallback(
     private val tracker: WifiNetworkTracker<Network>,
     private val publish: () -> Unit,
 ) : ConnectivityManager.NetworkCallback(FLAG_INCLUDE_LOCATION_INFO) {
+    // Nothing is published from onAvailable: the platform always follows it with onCapabilitiesChanged,
+    // and publishing here would flash a network without WifiInfo ("Waiting for data").
     override fun onAvailable(network: Network) {
         tracker.onAvailable(network)
-        publish()
     }
 
     override fun onCapabilitiesChanged(

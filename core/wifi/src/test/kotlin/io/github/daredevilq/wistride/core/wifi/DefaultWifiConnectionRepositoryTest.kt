@@ -43,6 +43,7 @@ private class FakeSources {
     var hasFine = true
     var canScan = true
     var scanRequests = 0
+    var scanResult = true
 
     val all get() =
         listOf(
@@ -69,7 +70,7 @@ private class FakeSources {
 
             override fun requestScan(): Boolean {
                 scanRequests++
-                return true
+                return scanResult
             }
         }
     val permissions =
@@ -204,6 +205,30 @@ class DefaultWifiConnectionRepositoryTest {
                     cancelAndIgnoreRemainingEvents()
                 }
                 assertThat(fakes.scanRequests).isEqualTo(0)
+            }
+        }
+
+    @Test
+    fun failedScanRequestIsRetriedButNeverRepeatedAfterSuccess() =
+        runTest {
+            val fakes = FakeSources()
+            fakes.scanResult = false
+            repo(fakes).snapshots.test {
+                awaitItem()
+                fakes.network.state.value = network()
+                awaitItem()
+                assertThat(fakes.scanRequests).isEqualTo(1)
+                fakes.airplane.state.value = true
+                awaitItem()
+                assertThat(fakes.scanRequests).isEqualTo(2)
+                fakes.scanResult = true
+                fakes.airplane.state.value = false
+                awaitItem()
+                assertThat(fakes.scanRequests).isEqualTo(3)
+                fakes.airplane.state.value = true
+                awaitItem()
+                assertThat(fakes.scanRequests).isEqualTo(3)
+                cancelAndIgnoreRemainingEvents()
             }
         }
 }

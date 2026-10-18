@@ -15,11 +15,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -48,10 +46,9 @@ class NowViewModel
         @OptIn(ExperimentalCoroutinesApi::class) // flatMapLatest has no stable alternative for re-subscribing.
         val uiState: StateFlow<NowUiState> =
             permissionStatus
-                .map { it == PermissionStatus.Granted }
-                .distinctUntilChanged()
-                // SSID/BSSID redaction is decided when the platform callback is registered, so a grant
-                // (or revocation) needs a fresh subscription to the repository.
+                // SSID/BSSID redaction is decided when the platform callback is registered, so any status
+                // change (a grant, a revocation, or a partial grant such as location without Nearby devices)
+                // needs a fresh subscription to the repository.
                 .flatMapLatest { observeConnection() }
                 // A history kept across an unsubscribed gap would show a misleading continuous line.
                 .onStart { rssiHistory.value = emptyList() }

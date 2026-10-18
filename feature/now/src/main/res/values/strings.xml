@@ -66,7 +66,7 @@
   <string name="now_value_ip_prefix" translatable="false">%1$s/%2$d</string>
   <string name="now_value_generation" translatable="false">%1$s (%2$s)</string>
   <string name="now_value_none">None</string>
-  <string name="now_band_2_4" translatable="false">2.4 GHz</string>
+  <string name="now_band_2_4">2.4 GHz</string>
   <string name="now_band_5" translatable="false">5 GHz</string>
   <string name="now_band_6" translatable="false">6 GHz</string>
 

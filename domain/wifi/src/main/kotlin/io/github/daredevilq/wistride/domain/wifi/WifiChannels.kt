@@ -34,8 +34,8 @@ object WifiChannels {
      * Resolves [frequencyMhz] (centre frequency) to a channel.
      *
      * - 2.4 GHz: `n = (f - 2407) / 5` for 2412..2472 (ch 1-13); 2484 is ch 14.
-     * - 5 GHz: `n = (f - 5000) / 5` for 5000 < f < 5925 (covers 4.9 GHz public-safety channels and
-     *   U-NII-4 up to ch 177; 5925 and above belong to 6 GHz).
+     * - 5 GHz: `n = (f - 5000) / 5` for 5000 < f < 5925 (up to U-NII-4 ch 177; 4.9 GHz public-safety
+     *   channels are not supported; 5925 and above belong to 6 GHz).
      * - 6 GHz: `n = (f - 5950) / 5` for 5955..7115 (ch 1-233); 5935 is the special ch 2.
      */
     fun fromFrequency(frequencyMhz: Int): WifiChannel? {

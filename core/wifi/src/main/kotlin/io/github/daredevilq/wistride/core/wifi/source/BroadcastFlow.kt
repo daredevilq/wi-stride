@@ -8,29 +8,33 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 /**
  * Cold flow of [read] evaluated once on collection (intent = null) and after each broadcast of
- * [actions]. System broadcasts are still delivered to a NOT_EXPORTED receiver. The receiver is
- * unregistered when the collector goes away.
+ * [actions], in the collector's context rather than on the receiver (main) thread. System
+ * broadcasts are still delivered to a NOT_EXPORTED receiver. The receiver is unregistered when the
+ * collector goes away.
  */
 internal fun <T> Context.broadcastFlow(
     vararg actions: String,
     read: (Intent?) -> T,
 ): Flow<T> =
-    callbackFlow {
+    callbackFlow<Intent?> {
         val receiver =
             object : BroadcastReceiver() {
                 override fun onReceive(
                     context: Context,
                     intent: Intent,
                 ) {
-                    trySend(read(intent))
+                    // Only forward the trigger: `read` makes binder calls and must not run on the main thread.
+                    trySend(intent)
                 }
             }
         val filter = IntentFilter().apply { actions.forEach(::addAction) }
         ContextCompat.registerReceiver(this@broadcastFlow, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
-        trySend(read(null))
+        trySend(null)
         awaitClose { unregisterReceiver(receiver) }
-    }.distinctUntilChanged()
+    }.conflate().map(read).distinctUntilChanged()

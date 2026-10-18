@@ -61,8 +61,7 @@ internal class DefaultWifiConnectionRepository
                         val missingFromCache =
                             connectedBssid != null && scans.none { it.bssid.equals(connectedBssid, ignoreCase = true) }
                         if (!scanRequested && missingFromCache && access.canReadScanResults) {
-                            scanRequested = true
-                            scanSource.requestScan()
+                            scanRequested = scanSource.requestScan()
                         }
                         buildSnapshot(wifiEnabled, airplaneModeOn, network, scans, access)
                     }

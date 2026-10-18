@@ -171,11 +171,11 @@ class NowViewModelTest {
 
             viewModel.onPermissionStatusChanged(PermissionStatus.Denied)
             runCurrent()
-            assertThat(repository.subscriptions).isEqualTo(1)
+            assertThat(repository.subscriptions).isEqualTo(2)
 
             viewModel.onPermissionStatusChanged(PermissionStatus.Granted)
             runCurrent()
-            assertThat(repository.subscriptions).isEqualTo(2)
+            assertThat(repository.subscriptions).isEqualTo(3)
             assertThat(repository.activeCollectors).isEqualTo(1)
             assertThat(loaded.permission).isEqualTo(PermissionStatus.Granted)
         }
@@ -200,5 +200,16 @@ class NowViewModelTest {
             val frozen = loaded.rssiHistory
             advanceTimeBy(10_000)
             assertThat(loaded.rssiHistory).isEqualTo(frozen)
+        }
+
+    @Test
+    fun anyPermissionStatusChangeResubscribesToTheRepository() =
+        runTest(dispatcher) {
+            collectState()
+            runCurrent()
+            assertThat(repository.subscriptions).isEqualTo(1)
+            viewModel.onPermissionStatusChanged(PermissionStatus.Denied)
+            runCurrent()
+            assertThat(repository.subscriptions).isEqualTo(2)
         }
 }

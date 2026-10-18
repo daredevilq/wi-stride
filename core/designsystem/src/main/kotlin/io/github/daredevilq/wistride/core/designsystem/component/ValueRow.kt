@@ -9,9 +9,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
@@ -39,8 +43,16 @@ fun ValueRow(
     onLongClick: (() -> Unit)? = null,
     onLongClickLabel: String? = null,
 ) {
+    // The lambda identity changes with every RSSI sample; reading it through a state keeps the gesture
+    // detector (keyed on Unit) from restarting and cancelling an ongoing press.
+    val currentOnLongClick by rememberUpdatedState(onLongClick)
+    val haptics = LocalHapticFeedback.current
     Row(
-        modifier = modifier.heightIn(min = MinRowHeight).longClickable(onLongClick, onLongClickLabel),
+        modifier =
+            modifier.heightIn(min = MinRowHeight).longClickable(onLongClick != null, onLongClickLabel) {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                currentOnLongClick?.invoke()
+            },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(WiStrideTheme.spacing.l),
     ) {
@@ -80,20 +92,21 @@ fun ValueRow(
 }
 
 private fun Modifier.longClickable(
-    action: (() -> Unit)?,
+    enabled: Boolean,
     label: String?,
+    onLongPress: () -> Unit,
 ): Modifier =
-    if (action == null) {
+    if (!enabled) {
         this
     } else {
         this
             .semantics(mergeDescendants = true) {
                 onLongClick(label = label) {
-                    action()
+                    onLongPress()
                     true
                 }
-            }.pointerInput(action) {
-                detectTapGestures(onLongPress = { action() })
+            }.pointerInput(Unit) {
+                detectTapGestures(onLongPress = { onLongPress() })
             }
     }
 
