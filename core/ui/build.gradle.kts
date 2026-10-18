@@ -12,4 +12,5 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
 
     testImplementation(libs.androidx.test.ext.junit)
+    testImplementation(libs.truth)
 }

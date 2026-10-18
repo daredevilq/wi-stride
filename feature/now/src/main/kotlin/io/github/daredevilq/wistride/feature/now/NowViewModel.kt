@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.daredevilq.wistride.core.model.permission.PermissionRequestHistory
-import io.github.daredevilq.wistride.core.model.permission.PermissionStatus
+import io.github.daredevilq.wistride.core.model.permission.PermissionSnapshot
 import io.github.daredevilq.wistride.core.model.wifi.WifiSnapshot
 import io.github.daredevilq.wistride.core.wifi.WifiConnectionRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -40,33 +41,36 @@ class NowViewModel
         /** Exposed so the screen's permission state can tell "never asked" from "don't ask again". */
         val permissionRequestHistory: PermissionRequestHistory,
     ) : ViewModel() {
-        private val permissionStatus = MutableStateFlow(PermissionStatus.NotRequested)
+        // Null until the route reports the first resolved snapshot; nothing is subscribed before that.
+        private val permission = MutableStateFlow<PermissionSnapshot?>(null)
         private val rssiHistory = MutableStateFlow<List<Int?>>(emptyList())
 
         @OptIn(ExperimentalCoroutinesApi::class) // flatMapLatest has no stable alternative for re-subscribing.
         val uiState: StateFlow<NowUiState> =
-            permissionStatus
-                // SSID/BSSID redaction is decided when the platform callback is registered, so any status
-                // change (a grant, a revocation, or a partial grant such as location without Nearby devices)
-                // needs a fresh subscription to the repository.
-                .flatMapLatest { observeConnection() }
+            permission
+                .filterNotNull()
+                .distinctUntilChanged()
+                // SSID/BSSID redaction is decided when the platform callback is registered, so a change of
+                // the granted set (a grant, a revocation, or a partial grant such as location without Nearby
+                // devices) needs a fresh subscription even when the status stays the same.
+                .flatMapLatest { observeConnection(it) }
                 // A history kept across an unsubscribed gap would show a misleading continuous line.
                 .onStart { rssiHistory.value = emptyList() }
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), NowUiState.Loading)
 
-        /** Called by the route whenever the runtime-permission status changes. */
-        fun onPermissionStatusChanged(status: PermissionStatus) {
-            permissionStatus.value = status
+        /** Called by the route with every resolved runtime-permission snapshot. */
+        fun onPermissionChanged(snapshot: PermissionSnapshot) {
+            permission.value = snapshot
         }
 
-        private fun observeConnection(): Flow<NowUiState> =
+        private fun observeConnection(snapshot: PermissionSnapshot): Flow<NowUiState> =
             flow {
                 coroutineScope {
                     val latest = MutableStateFlow<WifiSnapshot?>(null)
                     launch { repository.snapshots.collect { latest.value = it } }
                     launch { sampleRssiEverySecond(latest) }
-                    combine(latest.filterNotNull(), rssiHistory, permissionStatus) { snapshot, history, permission ->
-                        snapshot.toUiState(permission, history)
+                    combine(latest.filterNotNull(), rssiHistory) { wifi, history ->
+                        wifi.toUiState(snapshot.status, history)
                     }.collect { emit(it) }
                 }
             }

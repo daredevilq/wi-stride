@@ -50,7 +50,9 @@ internal fun NowScreenRoute(
             )
         }
     val permissionState = rememberPermissionRequestState(requirement, viewModel.permissionRequestHistory)
-    LaunchedEffect(permissionState.status) { viewModel.onPermissionStatusChanged(permissionState.status) }
+    // A null snapshot is still resolving; the screen stays on Loading rather than flash a wrong card.
+    val permissionSnapshot = permissionState.snapshot
+    LaunchedEffect(permissionSnapshot) { permissionSnapshot?.let(viewModel::onPermissionChanged) }
 
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()

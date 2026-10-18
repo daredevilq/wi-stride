@@ -6,6 +6,7 @@ import io.github.daredevilq.wistride.core.model.Availability
 import io.github.daredevilq.wistride.core.model.UnavailableReason
 import io.github.daredevilq.wistride.core.model.available
 import io.github.daredevilq.wistride.core.model.permission.InMemoryPermissionRequestHistory
+import io.github.daredevilq.wistride.core.model.permission.PermissionSnapshot
 import io.github.daredevilq.wistride.core.model.permission.PermissionStatus
 import io.github.daredevilq.wistride.core.model.wifi.ConnectionState
 import io.github.daredevilq.wistride.core.model.wifi.SignalLevel
@@ -36,7 +37,16 @@ class NowViewModelTest {
     // Lazy: viewModelScope must be created after MainDispatcherRule has replaced Dispatchers.Main.
     private val viewModel by lazy { NowViewModel(repository, InMemoryPermissionRequestHistory()) }
 
-    private fun TestScope.collectState(): Job = backgroundScope.launch { viewModel.uiState.collect {} }
+    private fun snapshotOf(
+        status: PermissionStatus,
+        vararg granted: String,
+    ) = PermissionSnapshot(status, granted.toSet())
+
+    // The route reports the first resolved snapshot right away; most tests start from that point.
+    private fun TestScope.collectState(initial: PermissionSnapshot? = snapshotOf(PermissionStatus.NotRequested)): Job {
+        initial?.let(viewModel::onPermissionChanged)
+        return backgroundScope.launch { viewModel.uiState.collect {} }
+    }
 
     private val loaded get() = viewModel.uiState.value as NowUiState.Loaded
 
@@ -45,6 +55,7 @@ class NowViewModelTest {
     @Test
     fun startsLoadingThenMapsConnectedSnapshot() =
         runTest(dispatcher) {
+            viewModel.onPermissionChanged(snapshotOf(PermissionStatus.NotRequested))
             viewModel.uiState.test {
                 assertThat(awaitItem()).isEqualTo(NowUiState.Loading)
                 val state = awaitItem() as NowUiState.Loaded
@@ -116,7 +127,7 @@ class NowViewModelTest {
             collectState()
             runCurrent()
             assertThat(loaded.locationServicesOff).isFalse()
-            viewModel.onPermissionStatusChanged(PermissionStatus.Granted)
+            viewModel.onPermissionChanged(snapshotOf(PermissionStatus.Granted))
             runCurrent()
             assertThat(loaded.locationServicesOff).isTrue()
         }
@@ -163,21 +174,63 @@ class NowViewModelTest {
         }
 
     @Test
-    fun resubscribesWhenPermissionIsGranted() =
+    fun subscribesToTheRepositoryExactlyOnceAtStart() =
         runTest(dispatcher) {
             collectState()
             runCurrent()
+            advanceTimeBy(500)
             assertThat(repository.subscriptions).isEqualTo(1)
+            assertThat(repository.activeCollectors).isEqualTo(1)
+        }
 
-            viewModel.onPermissionStatusChanged(PermissionStatus.Denied)
+    @Test
+    fun staysLoadingAndDoesNotSubscribeBeforeTheFirstSnapshot() =
+        runTest(dispatcher) {
+            collectState(initial = null)
+            runCurrent()
+            assertThat(repository.subscriptions).isEqualTo(0)
+            assertThat(viewModel.uiState.value).isEqualTo(NowUiState.Loading)
+
+            viewModel.onPermissionChanged(snapshotOf(PermissionStatus.Granted))
+            runCurrent()
+            assertThat(repository.subscriptions).isEqualTo(1)
+            assertThat(loaded.permission).isEqualTo(PermissionStatus.Granted)
+        }
+
+    @Test
+    fun resubscribesWhenTheStatusChanges() =
+        runTest(dispatcher) {
+            collectState()
+            runCurrent()
+            viewModel.onPermissionChanged(snapshotOf(PermissionStatus.Granted, "fine"))
             runCurrent()
             assertThat(repository.subscriptions).isEqualTo(2)
-
-            viewModel.onPermissionStatusChanged(PermissionStatus.Granted)
-            runCurrent()
-            assertThat(repository.subscriptions).isEqualTo(3)
             assertThat(repository.activeCollectors).isEqualTo(1)
             assertThat(loaded.permission).isEqualTo(PermissionStatus.Granted)
+        }
+
+    @Test
+    fun resubscribesWhenOnlyTheGrantedSetChanges() =
+        runTest(dispatcher) {
+            collectState(snapshotOf(PermissionStatus.PermanentlyDenied))
+            runCurrent()
+            assertThat(repository.subscriptions).isEqualTo(1)
+
+            viewModel.onPermissionChanged(snapshotOf(PermissionStatus.PermanentlyDenied, "location"))
+            runCurrent()
+            assertThat(repository.subscriptions).isEqualTo(2)
+            assertThat(repository.activeCollectors).isEqualTo(1)
+            assertThat(loaded.permission).isEqualTo(PermissionStatus.PermanentlyDenied)
+        }
+
+    @Test
+    fun identicalSnapshotDoesNotResubscribe() =
+        runTest(dispatcher) {
+            collectState(snapshotOf(PermissionStatus.Denied, "location"))
+            runCurrent()
+            viewModel.onPermissionChanged(snapshotOf(PermissionStatus.Denied, "location"))
+            runCurrent()
+            assertThat(repository.subscriptions).isEqualTo(1)
         }
 
     @Test
@@ -200,16 +253,5 @@ class NowViewModelTest {
             val frozen = loaded.rssiHistory
             advanceTimeBy(10_000)
             assertThat(loaded.rssiHistory).isEqualTo(frozen)
-        }
-
-    @Test
-    fun anyPermissionStatusChangeResubscribesToTheRepository() =
-        runTest(dispatcher) {
-            collectState()
-            runCurrent()
-            assertThat(repository.subscriptions).isEqualTo(1)
-            viewModel.onPermissionStatusChanged(PermissionStatus.Denied)
-            runCurrent()
-            assertThat(repository.subscriptions).isEqualTo(2)
         }
 }

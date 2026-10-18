@@ -22,6 +22,9 @@ private val MinTouchTarget = 48.dp
 /**
  * Explains why a permission is needed and offers the next step for [status]; renders nothing
  * when it is [PermissionStatus.Granted].
+ *
+ * Pass `PermissionRequestState.snapshot?.status`, and only render the card once that is non-null:
+ * `null` means the state is still resolving and neither the card nor gated content may be shown.
  */
 @Composable
 fun PermissionRationaleCard(

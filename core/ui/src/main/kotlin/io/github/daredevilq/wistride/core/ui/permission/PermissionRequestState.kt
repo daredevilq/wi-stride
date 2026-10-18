@@ -26,16 +26,26 @@ import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import io.github.daredevilq.wistride.core.model.permission.PermissionRequestHistory
+import io.github.daredevilq.wistride.core.model.permission.PermissionSnapshot
 import io.github.daredevilq.wistride.core.model.permission.PermissionStatus
 import io.github.daredevilq.wistride.core.model.permission.resolvePermissionStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /** Observable status of one [PermissionRequirement] plus the actions to improve it. */
 @Stable
 interface PermissionRequestState {
-    /** Current status; updated after the system dialog and when returning from settings. */
-    val status: PermissionStatus
+    /**
+     * Latest reading; updated after the system dialog and when returning from settings.
+     *
+     * `null` means "still resolving": the request history has not been read yet and the platform
+     * signals alone are ambiguous (denied, no rationale: never asked or "don't ask again"). Render
+     * neither the rationale card nor the gated content until it is non-null, otherwise the first
+     * frame would flash the wrong state.
+     */
+    val snapshot: PermissionSnapshot?
 
     /** Shows the system permission dialog. */
     fun launchRequest()
@@ -94,12 +104,14 @@ private class DefaultPermissionRequestState(
 ) : PermissionRequestState {
     var launcher: ManagedActivityResultLauncher<Array<String>, Map<String, Boolean>>? = null
 
-    // Synchronous first guess so an already granted permission never flashes the rationale card;
-    // the request history (suspending) refines NotRequested vs PermanentlyDenied in refresh().
-    override var status by mutableStateOf(
-        resolvePermissionStatus(isGranted(), shouldShowRationale(), wasRequestedBefore = false),
-    )
+    // Only the unambiguous cases are known synchronously (all granted, or the rationale is due);
+    // everything else needs the persisted history and stays null until the first refresh().
+    override var snapshot by mutableStateOf(initialSnapshot())
         private set
+
+    // Evaluations may be triggered concurrently (launcher callback and ON_RESUME); serializing them
+    // makes each one read fresh values, so the last evaluation to run always wins.
+    private val refreshMutex = Mutex()
 
     override fun launchRequest() {
         launcher?.launch(requirement.permissions.toTypedArray())
@@ -118,14 +130,37 @@ private class DefaultPermissionRequestState(
     }
 
     suspend fun refresh() {
-        status = resolvePermissionStatus(isGranted(), shouldShowRationale(), history.wasRequested(requirement.id))
+        refreshMutex.withLock {
+            val granted = grantedPermissions()
+            val status =
+                resolvePermissionStatus(
+                    isGranted = isGranted(granted),
+                    shouldShowRationale = shouldShowRationale(),
+                    wasRequestedBefore = history.wasRequested(requirement.id),
+                )
+            snapshot = PermissionSnapshot(status, granted)
+        }
     }
 
-    private fun isGranted(): Boolean =
-        !requirement.isApplicable(Build.VERSION.SDK_INT) ||
-            requirement.permissions.all {
-                ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-            }
+    private fun initialSnapshot(): PermissionSnapshot? {
+        val granted = grantedPermissions()
+        return when {
+            isGranted(granted) -> PermissionSnapshot(PermissionStatus.Granted, granted)
+            shouldShowRationale() -> PermissionSnapshot(PermissionStatus.Denied, granted)
+            else -> null
+        }
+    }
+
+    private fun grantedPermissions(): Set<String> =
+        if (requirement.isApplicable(Build.VERSION.SDK_INT)) {
+            requirement.permissions
+                .filter { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
+                .toSet()
+        } else {
+            requirement.permissions.toSet()
+        }
+
+    private fun isGranted(granted: Set<String>): Boolean = granted.containsAll(requirement.permissions)
 
     private fun shouldShowRationale(): Boolean {
         val activity = context.findActivity() ?: return false
