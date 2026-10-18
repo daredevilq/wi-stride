@@ -14,6 +14,8 @@ val ktlintVersion = libs.versions.ktlint.get()
 val composeRules = "io.nlopez.compose.rules:ktlint:${libs.versions.composeRules.get()}"
 
 spotless {
+    // LF is enforced by .gitattributes; a fixed policy avoids resolving git attributes for every file.
+    lineEndings = com.diffplug.spotless.LineEnding.UNIX
     kotlin {
         target("**/*.kt")
         targetExclude("**/build/**")
