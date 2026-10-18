@@ -10,32 +10,54 @@ object TraceCsv {
 
 /**
  * Turns the interleaved sensor streams into trace CSV rows: one row per accelerometer sample,
- * carrying the latest quaternion (empty columns until one arrived) and a step flag that is 1 only
- * for the first row after a step-detector event. Not thread-safe; feed it from one coroutine.
+ * carrying a quaternion and a `step` column.
+ *
+ * Sensors deliver in batches (up to [MotionSensorSource.MAX_REPORT_LATENCY_US] late) and the step
+ * detector is unbatched, so streams are matched by sensor timestamp, not arrival order. The
+ * quaternion is the newest received rotation with `timestampNs <= t_ns` (empty columns until there
+ * is one). `step` = number of not-yet-written step events with `timestampNs <= t_ns`. A
+ * step whose rows were already written lands on the next row; steps after the last row are only in
+ * [stepTimestampsNs]. Not thread-safe; feed it from one coroutine.
  */
 class TraceRowBuilder {
-    private var latestRotation: RotationSample? = null
-    private var stepPending = false
+    private var currentRotation: RotationSample? = null
+    private val pendingRotations = ArrayDeque<RotationSample>()
+    private val pendingSteps = ArrayDeque<Long>()
+    private val steps = mutableListOf<Long>()
 
     var rowCount = 0
         private set
-    var stepCount = 0
-        private set
+    val stepCount: Int
+        get() = steps.size
+
+    /** Raw step-detector timestamps in arrival order (lossless ground truth for the meta file). */
+    val stepTimestampsNs: List<Long>
+        get() = steps.toList()
 
     fun onRotation(sample: RotationSample) {
-        latestRotation = sample
+        pendingRotations.addLast(sample)
     }
 
-    fun onStep() {
-        stepPending = true
-        stepCount++
+    fun onStep(event: StepEvent) {
+        pendingSteps.addLast(event.timestampNs)
+        steps += event.timestampNs
     }
 
-    /** Returns the CSV line (without line terminator) for [sample] and resets the step flag. */
+    /** Returns the CSV line (without line terminator) for [sample], consuming the steps it covers. */
     fun row(sample: AccelSample): String {
-        val q = latestRotation
-        val step = if (stepPending) 1 else 0
-        stepPending = false
+        while (pendingRotations.isNotEmpty() && pendingRotations.first().timestampNs <= sample.timestampNs) {
+            currentRotation = pendingRotations.removeFirst()
+        }
+        val q = currentRotation
+        var step = 0
+        // Remove every covered step, not just a sorted prefix, in case events arrive out of order.
+        val iterator = pendingSteps.iterator()
+        while (iterator.hasNext()) {
+            if (iterator.next() <= sample.timestampNs) {
+                iterator.remove()
+                step++
+            }
+        }
         rowCount++
         return buildString {
             append(sample.timestampNs).append(',')
@@ -80,6 +102,7 @@ data class TraceMetadata(
     val durationMs: Long,
     val rowCount: Int,
     val stepCount: Int,
+    val stepTimestampsNs: List<Long>,
     val firstTimestampNs: Long,
     val lastTimestampNs: Long,
 ) {
@@ -101,6 +124,9 @@ data class TraceMetadata(
                 if (availability.stepDetectorState != StepDetectorState.Available) {
                     add("Step detector unusable (${availability.stepDetectorState}); step column is all 0.")
                 }
+                if (stepTimestampsNs.any { it > lastTimestampNs }) {
+                    add("Steps after the last accelerometer row are only listed in stepTimestampsNs.")
+                }
             }
         val fields =
             listOf(
@@ -111,6 +137,7 @@ data class TraceMetadata(
                 "durationMs" to durationMs.toString(),
                 "rowCount" to rowCount.toString(),
                 "stepCount" to stepCount.toString(),
+                "stepTimestampsNs" to stepTimestampsNs.joinToString(prefix = "[", postfix = "]"),
                 "requestedRateHz" to requestedRateHz.toString(),
                 "actualAverageRateHz" to (
                     actualAverageRateHz?.let {

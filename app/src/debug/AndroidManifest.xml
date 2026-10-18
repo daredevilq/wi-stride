@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+  <!-- Required on API 29+ for TYPE_STEP_DETECTOR. Debug-only until a release feature needs it (step detection uses the
+       app's own accelerometer detector), so release does not declare an unused dangerous permission. -->
+  <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+
   <application>
     <activity
       android:name=".HiltTestActivity"

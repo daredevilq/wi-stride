@@ -68,6 +68,13 @@ class TraceRecorderActivity : ComponentActivity() {
         super.onResume()
         viewModel.refreshAvailability()
     }
+
+    // Continuous sensors stop delivering to a backgrounded app, which would leave a silent gap in the
+    // trace; end the recording (and unregister everything) as soon as the screen is no longer visible.
+    override fun onStop() {
+        super.onStop()
+        if (!isChangingConfigurations) viewModel.stop()
+    }
 }
 
 @Composable
@@ -173,12 +180,15 @@ private fun SensorList(
 }
 
 @Composable
-private fun describe(info: SensorInfo?): String =
-    when {
-        info == null -> stringResource(R.string.trace_sensor_not_available)
-        info.maxRateHz == null -> stringResource(R.string.trace_sensor_details, info.name, info.vendor)
-        else -> stringResource(R.string.trace_sensor_details_rate, info.name, info.vendor, info.maxRateHz!!.toInt())
+private fun describe(info: SensorInfo?): String {
+    if (info == null) return stringResource(R.string.trace_sensor_not_available)
+    val rate = info.maxRateHz
+    return if (rate == null) {
+        stringResource(R.string.trace_sensor_details, info.name, info.vendor)
+    } else {
+        stringResource(R.string.trace_sensor_details_rate, info.name, info.vendor, rate.toInt())
     }
+}
 
 private const val MS_PER_SECOND = 1000
 private const val MS_PER_TENTH = 100

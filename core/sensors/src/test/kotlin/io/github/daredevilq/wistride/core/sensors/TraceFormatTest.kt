@@ -31,15 +31,39 @@ class TraceFormatTest {
     }
 
     @Test
-    fun step_flag_is_set_once_then_reset() {
+    fun steps_are_counted_on_the_first_row_covering_their_timestamp() {
         val builder = TraceRowBuilder()
-        builder.onStep()
-        builder.onStep()
+        builder.onStep(StepEvent(900L))
+        builder.onStep(StepEvent(950L))
+        builder.onStep(StepEvent(1_030L))
 
-        assertThat(builder.row(accel).substringAfterLast(',')).isEqualTo("1")
-        assertThat(builder.row(accel).substringAfterLast(',')).isEqualTo("0")
-        assertThat(builder.stepCount).isEqualTo(2)
-        assertThat(builder.rowCount).isEqualTo(2)
+        assertThat(builder.row(accel).substringAfterLast(',')).isEqualTo("2")
+        assertThat(builder.row(accel.copy(timestampNs = 1_020L)).substringAfterLast(',')).isEqualTo("0")
+        assertThat(builder.row(accel.copy(timestampNs = 1_040L)).substringAfterLast(',')).isEqualTo("1")
+        assertThat(builder.row(accel.copy(timestampNs = 1_060L)).substringAfterLast(',')).isEqualTo("0")
+        assertThat(builder.stepCount).isEqualTo(3)
+        assertThat(builder.stepTimestampsNs).containsExactly(900L, 950L, 1_030L).inOrder()
+        assertThat(builder.rowCount).isEqualTo(4)
+    }
+
+    @Test
+    fun step_arriving_after_its_rows_lands_on_the_next_row() {
+        val builder = TraceRowBuilder()
+        builder.row(accel)
+        builder.onStep(StepEvent(990L))
+
+        assertThat(builder.row(accel.copy(timestampNs = 1_020L)).substringAfterLast(',')).isEqualTo("1")
+    }
+
+    @Test
+    fun rotation_newer_than_the_row_is_not_used_yet() {
+        val builder = TraceRowBuilder()
+        builder.onRotation(rotation)
+        builder.onRotation(rotation.copy(timestampNs = 1_010L, w = 1f, y = 0f))
+
+        assertThat(builder.row(accel)).endsWith(",0.000000,0.500000,0.000000,0.866025,0")
+        assertThat(builder.row(accel.copy(timestampNs = 1_020L)))
+            .endsWith(",0.000000,0.000000,0.000000,1.000000,0")
     }
 
     @Test
@@ -99,6 +123,7 @@ class TraceFormatTest {
                 durationMs = 2_000L,
                 rowCount = 101,
                 stepCount = 3,
+                stepTimestampsNs = listOf(10L, 20L, 2_500_000_000L),
                 firstTimestampNs = 0L,
                 lastTimestampNs = 2_000_000_000L,
             )
@@ -114,6 +139,8 @@ class TraceFormatTest {
         assertThat(json).contains("Accel \\\"X\\\"")
         assertThat(json).contains("\"gameRotationVector\":null")
         assertThat(json).contains("Game rotation vector missing")
+        assertThat(json).contains("\"stepTimestampsNs\":[10, 20, 2500000000]")
+        assertThat(json).contains("Steps after the last accelerometer row")
     }
 
     @Test
@@ -129,6 +156,7 @@ class TraceFormatTest {
                 0L,
                 1,
                 0,
+                emptyList(),
                 5L,
                 5L,
             )

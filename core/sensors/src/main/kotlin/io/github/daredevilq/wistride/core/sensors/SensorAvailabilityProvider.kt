@@ -8,7 +8,11 @@ import android.hardware.SensorManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-/** Reads which motion sensors exist and whether the step detector is usable. Cheap; call on demand. */
+/**
+ * Reads which motion sensors exist and whether the step detector is usable. Cheap; call on demand.
+ * The step detector needs `ACTIVITY_RECOGNITION`, which the app module declares (debug only for now);
+ * without it the state is [StepDetectorState.NeedsPermission].
+ */
 class SensorAvailabilityProvider
     @Inject
     constructor(

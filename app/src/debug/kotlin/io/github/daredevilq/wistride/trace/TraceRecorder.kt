@@ -61,7 +61,8 @@ class TraceRecorder
 
         /**
          * Suspends until cancelled. [onProgress] is called every [PROGRESS_EVERY_ROWS] rows;
-         * [onSaved] receives the CSV file once it is closed (also after cancellation).
+         * [onSaved] receives the CSV file once both files are written (also after cancellation), but not
+         * when writing failed.
          *
          * @throws IOException if the target directory is unavailable or writing fails.
          */
@@ -81,6 +82,7 @@ class TraceRecorder
             var firstNs = 0L
             var lastNs = 0L
             val writer = csv.bufferedWriter(Charsets.UTF_8)
+            var writeFailed = false
             try {
                 writer.write(TraceCsv.HEADER)
                 writer.write("\n")
@@ -91,7 +93,7 @@ class TraceRecorder
                         }
 
                         is Event.Step -> {
-                            builder.onStep()
+                            builder.onStep(event.event)
                         }
 
                         is Event.Accel -> {
@@ -105,6 +107,9 @@ class TraceRecorder
                         }
                     }
                 }
+            } catch (e: IOException) {
+                writeFailed = true
+                throw e
             } finally {
                 writer.close()
                 val metadata =
@@ -118,12 +123,13 @@ class TraceRecorder
                         durationMs = SystemClock.elapsedRealtime() - startElapsed,
                         rowCount = builder.rowCount,
                         stepCount = builder.stepCount,
+                        stepTimestampsNs = builder.stepTimestampsNs,
                         firstTimestampNs = firstNs,
                         lastTimestampNs = lastNs,
                     )
                 File(dir, "$base.meta.json").writeText(metadata.toJson(), Charsets.UTF_8)
                 onProgress(TraceProgress(builder.rowCount, builder.stepCount))
-                onSaved(csv)
+                if (!writeFailed) onSaved(csv)
             }
         }
 
