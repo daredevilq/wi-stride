@@ -37,3 +37,5 @@ Requires JDK 17 and the Android SDK (platform 37).
 |---|---|---|
 | 2026-10-18 | M0 – Project bootstrap | [docs/progress/2026-10-18-m0-bootstrap.md](docs/progress/2026-10-18-m0-bootstrap.md) |
 | 2026-10-31 | M1 – Live diagnostics ("Now" screen) | [docs/progress/2026-10-31-m1-now.md](docs/progress/2026-10-31-m1-now.md) |
+| 2026-10-31 | M5 (part 1) – Motion sensors and trace recorder | [docs/progress/2026-10-31-m5-sensors.md](docs/progress/2026-10-31-m5-sensors.md) |
+| 2026-10-31 | M2 – Latency ("Ping" screen) | [docs/progress/2026-10-31-m2-ping.md](docs/progress/2026-10-31-m2-ping.md) |
