@@ -36,3 +36,4 @@ Requires JDK 17 and the Android SDK (platform 37).
 | Date | Milestone | Notes |
 |---|---|---|
 | 2026-10-18 | M0 – Project bootstrap | [docs/progress/2026-10-18-m0-bootstrap.md](docs/progress/2026-10-18-m0-bootstrap.md) |
+| 2026-10-18 | M1 – Live diagnostics ("Now" screen) | [docs/progress/2026-10-18-m1-now.md](docs/progress/2026-10-18-m1-now.md) |
